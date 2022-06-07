@@ -380,13 +380,13 @@ glimpse(train)
     ## Rows: 5,917
     ## Columns: 13
     ## $ date              <date> 2017-12-01, 2017-12-01, 2017-12-01, 2017-12-01, 201~
-    ## $ rented_bike_count <int> 254, 204, 107, 78, 930, 490, 339, 360, 451, 447, 463~
-    ## $ hour              <int> 0, 1, 3, 4, 8, 9, 10, 11, 13, 14, 15, 17, 18, 19, 20~
-    ## $ temperature       <dbl> -5.2, -5.5, -6.2, -6.0, -7.6, -6.5, -3.5, -0.5, 2.4,~
-    ## $ humidity          <int> 37, 38, 40, 36, 37, 27, 24, 21, 25, 26, 36, 58, 66, ~
-    ## $ wind_speed        <dbl> 2.2, 0.8, 0.9, 2.3, 1.1, 0.5, 1.2, 1.3, 1.6, 2.0, 3.~
-    ## $ visibility        <int> 2000, 2000, 2000, 2000, 2000, 1928, 1996, 1936, 2000~
-    ## $ solar_radiation   <dbl> 0.00, 0.00, 0.00, 0.00, 0.01, 0.23, 0.65, 0.94, 1.16~
+    ## $ rented_bike_count <int> 204, 78, 460, 930, 339, 360, 449, 451, 484, 862, 600~
+    ## $ hour              <int> 1, 4, 7, 8, 10, 11, 12, 13, 16, 18, 19, 20, 21, 22, ~
+    ## $ temperature       <dbl> -5.5, -6.0, -7.4, -7.6, -3.5, -0.5, 1.7, 2.4, 1.2, 0~
+    ## $ humidity          <int> 38, 36, 38, 37, 24, 21, 23, 25, 54, 66, 77, 79, 81, ~
+    ## $ wind_speed        <dbl> 0.8, 2.3, 0.9, 1.1, 1.2, 1.3, 1.4, 1.6, 4.2, 1.4, 1.~
+    ## $ visibility        <int> 2000, 2000, 2000, 2000, 1996, 1936, 2000, 2000, 793,~
+    ## $ solar_radiation   <dbl> 0.00, 0.00, 0.00, 0.01, 0.65, 0.94, 1.11, 1.16, 0.24~
     ## $ rainfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
     ## $ snowfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
     ## $ seasons           <fct> Winter, Winter, Winter, Winter, Winter, Winter, Wint~
@@ -448,29 +448,25 @@ treem
     ## node), split, n, deviance, yval
     ##       * denotes terminal node
     ## 
-    ##   1) root 5917 2452176000  728.4876  
-    ##     2) temperature< 12.05 2802  334934800  366.3183  
-    ##       4) date< 17809.5 2230  136463500  283.4265  
-    ##         8) hour< 6.5 717    8263510  136.0000 *
-    ##         9) hour>=6.5 1513  105231300  353.2908  
-    ##          18) date< 17594.5 1143   25383990  277.7909 *
-    ##          19) date>=17594.5 370   53204760  586.5243 *
-    ##       5) date>=17809.5 572  123412600  689.4808  
-    ##        10) hour< 6.5 219    7602896  321.6438 *
-    ##        11) hour>=6.5 353   67794820  917.6856 *
-    ##     3) temperature>=12.05 3115 1419114000 1054.2650  
-    ##       6) hour< 15.5 2004  447742900  769.1372  
-    ##        12) solar_radiation< 0.275 912  107498800  469.7368 *
-    ##        13) solar_radiation>=0.275 1092  190215300 1019.1860 *
-    ##       7) hour>=15.5 1111  514574900 1568.5740  
-    ##        14) humidity>=82.5 122   31658210  462.9180 *
-    ##        15) humidity< 82.5 989  315377000 1704.9650  
-    ##          30) hour>=22.5 96    6463242 1131.6350 *
-    ##          31) hour< 22.5 893  273965600 1766.5990  
-    ##            62) hour< 16.5 142   26293750 1351.6900 *
-    ##            63) hour>=16.5 751  218604500 1845.0510  
-    ##             126) temperature< 20.35 282   58775600 1584.2060 *
-    ##             127) temperature>=20.35 469  129104700 2001.8910 *
+    ##   1) root 5917 2447480000  726.9833  
+    ##     2) temperature< 10.95 2647  275501600  350.8814  
+    ##       4) date< 17805.5 2107  109541900  271.9824 *
+    ##       5) date>=17805.5 540  101666100  658.7333  
+    ##        10) hour< 6.5 211    6603942  318.3791 *
+    ##        11) hour>=6.5 329   54943890  877.0152 *
+    ##     3) temperature>=10.95 3270 1494463000 1031.4300  
+    ##       6) hour< 15.5 2125  483516100  752.5144  
+    ##        12) solar_radiation< 0.295 1025  132163200  465.8849 *
+    ##        13) solar_radiation>=0.295 1100  188673800 1019.6010 *
+    ##       7) hour>=15.5 1145  538832300 1549.0690  
+    ##        14) humidity>=82.5 118   29176960  438.6695 *
+    ##        15) humidity< 82.5 1027  347446100 1676.6510  
+    ##          30) temperature< 16.35 205   38777760 1255.8000 *
+    ##          31) temperature>=16.35 822  263304400 1781.6080  
+    ##            62) hour>=22.5 90    4552378 1230.0220 *
+    ##            63) hour< 22.5 732  228003200 1849.4260  
+    ##             126) hour< 16.5 125   24000920 1380.7200 *
+    ##             127) hour>=16.5 607  170886500 1945.9470 *
 
 ``` r
 plot(treem, uniform = TRUE,
@@ -520,8 +516,8 @@ predictions_train_cart = predict(treem, data = train)
 eval_results(train$rented_bike_count, predictions_train_cart, train)
 ```
 
-    ##       RMSE   Rsquare
-    ## 1 346.9512 0.7095398
+    ##     RMSE   Rsquare
+    ## 1 358.23 0.6897538
 
 ``` r
 # Step 3 - predicting and evaluating the model on test data
@@ -532,8 +528,8 @@ predictions_test_cart = predict(treem, newdata = test)
 eval_results(test$rented_bike_count, predictions_test_cart, test)
 ```
 
-    ##      RMSE   Rsquare
-    ## 1 356.232 0.6851974
+    ##       RMSE   Rsquare
+    ## 1 365.6228 0.6698903
 
 # gam model
 
@@ -546,31 +542,31 @@ summary(GAMsm)
     ## Call: gam(formula = rented_bike_count ~ ., data = train)
     ## Deviance Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -1157.04  -279.11   -53.71   210.78  2210.09 
+    ## -1150.47  -277.64   -57.04   209.33  2212.39 
     ## 
-    ## (Dispersion Parameter for gaussian family taken to be 186345.6)
+    ## (Dispersion Parameter for gaussian family taken to be 187539.9)
     ## 
-    ##     Null Deviance: 2452176150 on 5916 degrees of freedom
-    ## Residual Deviance: 1098879779 on 5897 degrees of freedom
-    ## AIC: 88618.6 
+    ##     Null Deviance: 2447479769 on 5916 degrees of freedom
+    ## Residual Deviance: 1105922937 on 5897 degrees of freedom
+    ## AIC: 88656.4 
     ## 
     ## Number of Local Scoring Iterations: 2 
     ## 
     ## Anova for Parametric Effects
     ##                   Df     Sum Sq   Mean Sq   F value    Pr(>F)    
-    ## date               1  401611845 401611845 2155.1994 < 2.2e-16 ***
-    ## hour               1  427928916 427928916 2296.4267 < 2.2e-16 ***
-    ## temperature        1  297169797 297169797 1594.7243 < 2.2e-16 ***
-    ## humidity           1  118569711 118569711  636.2894 < 2.2e-16 ***
-    ## wind_speed         1        229       229    0.0012 0.9720075    
-    ## visibility         1    2094919   2094919   11.2421 0.0008047 ***
-    ## solar_radiation    1   15757034  15757034   84.5581 < 2.2e-16 ***
-    ## rainfall           1   27571659  27571659  147.9598 < 2.2e-16 ***
-    ## snowfall           1     134794    134794    0.7234 0.3950799    
-    ## seasons            3   44471796  14823932   79.5508 < 2.2e-16 ***
-    ## holiday            1    3593172   3593172   19.2823 1.147e-05 ***
-    ## day                6   14392499   2398750   12.8726 1.666e-14 ***
-    ## Residuals       5897 1098879779    186346                        
+    ## date               1  377647260 377647260 2013.6899 < 2.2e-16 ***
+    ## hour               1  428055545 428055545 2282.4769 < 2.2e-16 ***
+    ## temperature        1  308159858 308159858 1643.1694 < 2.2e-16 ***
+    ## humidity           1  119485558 119485558  637.1206 < 2.2e-16 ***
+    ## wind_speed         1      44745     44745    0.2386 0.6252453    
+    ## visibility         1    2100452   2100452   11.2000 0.0008231 ***
+    ## solar_radiation    1   15505992  15505992   82.6810 < 2.2e-16 ***
+    ## rainfall           1   28423831  28423831  151.5615 < 2.2e-16 ***
+    ## snowfall           1     207819    207819    1.1081 0.2925318    
+    ## seasons            3   46748091  15582697   83.0900 < 2.2e-16 ***
+    ## holiday            1    5012048   5012048   26.7252 2.423e-07 ***
+    ## day                6   10165635   1694273    9.0342 7.460e-10 ***
+    ## Residuals       5897 1105922937    187540                        
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -598,7 +594,7 @@ print(model_gbm)
     ##     n.cores = NULL)
     ## A gradient boosted model with gaussian loss function.
     ## 5000 iterations were performed.
-    ## The best cross-validation iteration was 4999.
+    ## The best cross-validation iteration was 4997.
     ## There were 10 predictors of which 10 had non-zero influence.
 
 ``` r
@@ -607,7 +603,7 @@ perf_gbm1 = gbm.perf(model_gbm, method = "cv")
 print(perf_gbm1)
 ```
 
-    ## [1] 4999
+    ## [1] 4997
 
 ``` r
 bike_prediction_1 <- stats::predict(
@@ -625,7 +621,7 @@ rmse_fit1 <- Metrics::rmse(actual = test$rented_bike_count,
 print(rmse_fit1)
 ```
 
-    ## [1] 248.1517
+    ## [1] 256.8337
 
 ``` r
 min_MSE <- which.min(model_gbm$cv.error)
@@ -634,7 +630,7 @@ min_MSE <- which.min(model_gbm$cv.error)
 sqrt(model_gbm$cv.error[min_MSE])
 ```
 
-    ## [1] 253.4973
+    ## [1] 249.323
 
 ``` r
 ## [1] 23112.1
@@ -645,7 +641,7 @@ gbm.perf( model_gbm, method = "cv")
 
 ![](SeoulBikeRent_files/figure-gfm/GBM-1.png)<!-- -->
 
-    ## [1] 4999
+    ## [1] 4997
 
 # XGboost
 
