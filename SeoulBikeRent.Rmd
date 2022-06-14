@@ -1,0 +1,441 @@
+---
+title: "Seoul bike rent analysis (still in progress)"
+author: "Rokas\n"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')` "
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+<style>
+body {
+  color: #blue;
+  font-family: Calibri;
+  background-color: #lightblue;
+}
+pre {
+  color: #708090;
+  background-color: #F8F8FF;
+}
+</style>
+
+
+
+# Dataset Attributes
+
+Identifier
+
+  -  Id - The Unique Integer Id for every entry in data set
+
+Other variables (columns)
+
+  -  Date - dd/mm/yyyy (String)
+  -  Hour -  Hour of the day (int)
+  -  Temperature - Temperature(°C) 
+  -  Humidity -  Humidity (%)
+  -  Wind_Speed - Wind Speed (m/s)
+  -  Visibility - Visibility ( 10m range)
+  -  Dew_Point - Dew Point Temperature(°C)
+  -  Solar_Radiation - Solar Radiation (MJ/m^2)
+  -  Rainfall - Rainfall (mm)
+  -  Snowfall - Snowfall (mm)
+
+Categorical Variables (columns)
+
+  -  Season - Winter, Spring, Summer and Autumn
+  -  IsHoliday - Yes/No stands for Holiday/No Holiday for Public Holidays from the South Korean Public Holidays List
+  -  IsFunctioningDay - Yes/No stands for Yes/No to Whether the Hour in the entry is a functioning hour (work hour) of the day or not.
+
+Target variable (column)
+
+  -  Bikes_Rented - Number of Bikes Rented in the Hour of the Day with Specified parameters.
+Dataset Attributes
+
+Identifiers
+
+    Id - The Unique Integer Id for every entry in both sets
+
+Other columns
+
+    Date - dd/mm/yyyy String for Date
+    Hour - int, Hour of the day
+    Temperature - Temperature in Degree Celsius
+    Humidity - % of Humidity
+    Wind_Speed - Wind Speed in m/s
+    Visibility - Visibility in 10m range
+    Dew_Point - Dew Point Temperature in Degree Celsius
+    Solar_Radiation - Solar Radiation in MJ/m^2
+    Rainfall - Rainfall in mm
+    Snowfall - Snowfall in mm
+
+Categorical Columns
+
+    Season - Winter, Spring, Summer & Autumn
+    IsHoliday - 1/0 for Holiday/No Holiday for Public Holidays from the South Korean Public Holidays List
+    IsFunctioningDay - 1/0 for Yes/No to Whether the Hour in the entry is a functioning hour (work hour) of the day or not.
+
+Target Column
+
+    Bikes_Rented - Number of Bikes Rented in the Hour of the Day with Specified parameters.
+
+## Libraries
+```{r   results = 'hide', message = FALSE}
+library(Hmisc)
+library(corrplot)
+library(plyr)
+library(dplyr)
+library(scales)
+library(viridis)
+library(lubridate)
+library(knitr)
+library(caTools)
+library(leaps)
+library(cvms)  #fro confusion matrix
+library(earth) #for mars model
+library(caret) # for mars tuning and cross-validation
+library(vip)    # for variable importance plots(vips)
+library(rpart)  #for decision trees
+library(gam) #for GAMs
+library(gbm) #for gbm
+library(Metrics) #for gbm
+library(xgboost)
+```
+## Exploratory analysis
+
+Reading a file as a data.table and checking its structure and summary
+
+```{r reading csv file}
+seoul_bike <- read.csv("raw_seoul_bike_sharing.csv")
+str(seoul_bike)
+summary(seoul_bike)
+
+```
+
+Data frame consists of `14` variables or columns and `8760` observations or rows.
+Let's look for `NA` values first and remove them by saving it in the new data frame.
+There are `295` NA values of `RENTED_BIKE_COlUMN`, and `11` `NA` values of `TEMPERATURE`.
+We can remove them
+
+
+```{r remvoing NA values}
+
+sapply(seoul_bike, function(x) sum(is.na(x)))
+clean_bike <- na.omit(seoul_bike)
+str(clean_bike)
+```
+
+ All the names of `14` variables are converted to lower cases for convenience.
+ 
+ 
+```{r lower cases}
+names(clean_bike) <- tolower(names(clean_bike))
+names(clean_bike)
+```
+
+
+
+By using a `lubridate` package date is converted from char format to date format with `dmy` function.(day/month/year).
+Also all categorical character variables are changed to numerical values for calculations. New variable `day` added to `clean_bike` data frame
+to name weekdays for analysis. Weekdays are converted to numbers as well.
+
+
+```{r cleaning}
+clean_bike$date <- dmy(clean_bike$date)
+clean_bike$holiday <- ifelse(clean_bike$holiday == 'No Holiday' ,0, 1)
+#clean_bike$seasons <- recode(clean_bike$seasons, 'Winter'= 1, 'Spring'= 2, 'Summer'= 3, 'Autumn'= 4)
+clean_bike$seasons <- as.factor(clean_bike$seasons)
+class(clean_bike$seasons)
+
+clean_bike$day <- weekdays(as.Date(clean_bike$date))
+
+
+```
+
+By using `table` function it is possible now to count all the values. It is clea now that 'functioning day' has only 1 value. It means that bikes are rented in Seoul any time of the year. So we can remove this variable from the data frame 'clean_bike'.
+
+```{r tables for analysis}
+
+table(clean_bike$functioning_day)
+
+pie(table(clean_bike$holiday), labels=c("No","Yes"))
+table(clean_bike$holiday)
+
+pie(table(clean_bike$seasons), labels=c("Winter","Spring","Summer","Autumn"))
+table(clean_bike$seasons)
+
+pie(table(clean_bike$day),labels=c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
+table(clean_bike$day)
+
+clean_bike <- clean_bike %>% select(-functioning_day)
+```
+
+Now I can calculate correlation and look for variables that correlate the most with `rented_bike_count`. In other words, we are looking for the most paramount factors for bike rent. Also 'dew_point_temperature' is removed because it highly correlates with temperature and for predictive analysis it won't be useful. One 'temperature' variable is enough for analysis. It can be seen that 
+
+```{r correlation , out.width='100%', fig.align = 'left', fig.cap= "Figure 1.1 This is Caption"}
+corrplot(cor(clean_bike[c(2:11)]),type = "upper",col=COL2("RdBu",100))
+clean_bike <- clean_bike %>% select(-dew_point_temperature)
+```
+
+```{r tables, message = FALSE }
+
+
+rent_by_year <- clean_bike %>%
+  mutate(year= year(clean_bike$date), month=month(clean_bike$date)) %>%
+  group_by(year, month) %>%
+  summarise(total = sum(rented_bike_count), average_bike_rent_count = mean(rented_bike_count), average_temperature = mean(temperature))
+kable(rent_by_year)
+```
+
+
+
+# Temperature
+```{r temp}
+hist(clean_bike$temperature  ,xlab= "Temperature", main= "Temperature distribution" )
+
+summary(clean_bike$temperature)
+
+ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000)
+ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot() 
+
+```
+
+
+# Hour
+
+```{r , out.width='100%', fig.align = 'left', fig.cap= "Figure 1.1 This is Caption", warning= FALSE}
+knitr::knit_exit()
+ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point() +
+  facet_wrap(~seasons, scales = "free_x") +
+ylab('Count of Rented Bikes')  +
+xlab('Date') +
+ggtitle('Seasonal Bike Rent Dependency in Seoul')  + 
+ scale_fill_viridis(direction = -1)+
+  scale_colour_viridis_c(option = "plasma")
+
+
+
+```
+
+
+
+
+## Modeling analysis
+
+Data is split into training and test data sets with 70/30 % ratio
+
+```{r data splitting}
+split = sort(sample(nrow(clean_bike), nrow(clean_bike)*.7))
+train<-clean_bike[split,]
+test<-clean_bike[-split,]
+dim(train)
+dim(test)
+glimpse(train)
+
+```
+
+# Mars
+
+MARS
+
+```{r mars, eval = FALSE}
+
+marsm <- earth(rented_bike_count ~ ., data = train, degree = 1)
+
+
+marsm
+summary(marsm)
+plot(marsm, which = 1)
+axis(1, at = 1:20)
+
+knitr::knit_exit()
+
+
+```
+
+```{r mars2, eval = FALSE}
+hyper_grid <- expand.grid(
+  degree = 1:3, 
+  nprune = seq(2, 30, length.out = 10) %>% floor()
+  )
+
+tuned_mars <- train(
+  x = subset(train, select = -rented_bike_count),
+  y = train$rented_bike_count,
+  method = "earth",
+  metric = "RMSE",
+  trControl = trainControl(method = "cv", number = 10),
+  tuneGrid = hyper_grid
+)
+tuned_mars$bestTune
+
+ggplot(tuned_mars)+
+  scale_x_continuous(breaks = seq(0, 30, by = 5))
+
+
+p1 <- vip(tuned_mars, num_features = 20, bar = FALSE, value = "gcv") + ggtitle("GCV")
+p2 <- vip(tuned_mars, num_features = 20, bar = FALSE, value = "rss") + ggtitle("RSS")
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+
+
+```
+
+
+# decisions tree
+
+
+```{r decision tree}
+treem <- rpart(rented_bike_count ~ ., 
+             method = "anova", data = train)
+treem
+
+plot(treem, uniform = TRUE,
+          main = "... 
+                 Tree using Regression")
+text(treem, use.n = TRUE, cex = .7)
+
+# Step 1 - create the evaluation metrics function
+
+
+eval_results <- function(true, predicted, df) {
+
+  SSE <- sum((predicted - true)^2)
+
+  SST <- sum((true - mean(true))^2)
+
+  R_square <- 1 - SSE / SST
+
+  RMSE = sqrt(SSE/nrow(df))
+
+  
+
+# Model performance metrics
+
+  data.frame(
+
+    RMSE = RMSE,
+
+    Rsquare = R_square
+
+  )
+
+  
+
+}
+
+
+# Step 2 - predicting and evaluating the model on train data
+
+
+predictions_train_cart = predict(treem, data = train)
+
+eval_results(train$rented_bike_count, predictions_train_cart, train)
+
+
+# Step 3 - predicting and evaluating the model on test data
+
+
+predictions_test_cart = predict(treem, newdata = test)
+
+eval_results(test$rented_bike_count, predictions_test_cart, test)
+
+```
+# gam model
+```{r GAMs}
+GAMsm <- gam(rented_bike_count ~ .,data = train)
+summary(GAMsm)
+
+
+
+```
+
+
+# GBM
+```{r GBM}
+model_gbm <- gbm(formula = rented_bike_count ~.,
+                data = train[,c(-1,-13)],
+                distribution = "gaussian",
+               cv.folds = 5,
+               interaction.depth = 2,
+                shrinkage = .01,
+                n.minobsinnode = 10,
+                n.trees = 5000,
+               n.cores = NULL, # will use all cores by defaul
+               verbose = FALSE)
+ 
+
+print(model_gbm)
+
+# model performance
+perf_gbm1 = gbm.perf(model_gbm, method = "cv")
+print(perf_gbm1)
+
+
+bike_prediction_1 <- stats::predict(
+                           # the model from above
+                          object = model_gbm, 
+                          # the testing data
+                          newdata = test,
+                          # this is the number we calculated above
+                          n.trees = perf_gbm1)
+
+rmse_fit1 <- Metrics::rmse(actual = test$rented_bike_count, 
+                           predicted = bike_prediction_1)
+
+
+print(rmse_fit1)
+
+min_MSE <- which.min(model_gbm$cv.error)
+
+# get MSE and compute RMSE
+sqrt(model_gbm$cv.error[min_MSE])
+## [1] 23112.1
+
+# plot loss function as a result of n trees added to the ensemble
+gbm.perf( model_gbm, method = "cv")
+
+
+```
+
+
+# XGboost 
+```{r XGBoost, eval = FALSE}
+
+
+X_train = data.matrix(train[,-2])                  # independent variables for train
+y_train = train[,2]                                # dependent variables for train
+  
+X_test = data.matrix(test[,-2])                    # independent variables for test
+y_test = test[,2]                                   # dependent variables for test
+
+# convert the train and test data into xgboost matrix type.
+xgboost_train = xgb.DMatrix(data=X_train, label=y_train)
+xgboost_test = xgb.DMatrix(data=X_test, label=y_test)
+
+
+xgm <- xgboost(data = xgboost_train,                    # the data   
+                 max.depth=3,                # max depth 
+               scale_pos_weight = 1, 
+               early_stopping_rounds = 3,
+               mode="regression",
+                 nrounds=5000)                              # max number of boosting iterations
+
+summary(xgm)
+xgm
+
+#pred_test <- predict(xgm, xgboost_test)
+
+#pred_test
+
+
+```
+
+# Time-series forecast
+
+
+
+``` {r  }
+
+
+```
