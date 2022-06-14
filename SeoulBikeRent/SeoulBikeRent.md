@@ -2,7 +2,7 @@ Seoul bike rent analysis (still in progress)
 ================
 Rokas
 
-Last compiled on 07 June, 2022
+Last compiled on 14 June, 2022
 
 <style>
 body {
@@ -380,13 +380,13 @@ glimpse(train)
     ## Rows: 5,917
     ## Columns: 13
     ## $ date              <date> 2017-12-01, 2017-12-01, 2017-12-01, 2017-12-01, 201~
-    ## $ rented_bike_count <int> 254, 173, 107, 100, 181, 460, 930, 490, 339, 360, 45~
-    ## $ hour              <int> 0, 2, 3, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 18, 19, ~
-    ## $ temperature       <dbl> -5.2, -6.0, -6.2, -6.4, -6.6, -7.4, -7.6, -6.5, -3.5~
-    ## $ humidity          <int> 37, 39, 40, 37, 35, 38, 37, 27, 24, 21, 25, 36, 58, ~
-    ## $ wind_speed        <dbl> 2.2, 1.0, 0.9, 1.5, 1.3, 0.9, 1.1, 0.5, 1.2, 1.3, 1.~
-    ## $ visibility        <int> 2000, 2000, 2000, 2000, 2000, 2000, 2000, 1928, 1996~
-    ## $ solar_radiation   <dbl> 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.01, 0.23, 0.65~
+    ## $ rented_bike_count <int> 254, 204, 100, 181, 460, 930, 360, 449, 451, 447, 46~
+    ## $ hour              <int> 0, 1, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 19, 20, 21~
+    ## $ temperature       <dbl> -5.2, -5.5, -6.4, -6.6, -7.4, -7.6, -0.5, 1.7, 2.4, ~
+    ## $ humidity          <int> 37, 38, 37, 35, 38, 37, 21, 23, 25, 26, 36, 54, 77, ~
+    ## $ wind_speed        <dbl> 2.2, 0.8, 1.5, 1.3, 0.9, 1.1, 1.3, 1.4, 1.6, 2.0, 3.~
+    ## $ visibility        <int> 2000, 2000, 2000, 2000, 2000, 2000, 1936, 2000, 2000~
+    ## $ solar_radiation   <dbl> 0.00, 0.00, 0.00, 0.00, 0.00, 0.01, 0.94, 1.11, 1.16~
     ## $ rainfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
     ## $ snowfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
     ## $ seasons           <fct> Winter, Winter, Winter, Winter, Winter, Winter, Wint~
@@ -448,29 +448,25 @@ treem
     ## node), split, n, deviance, yval
     ##       * denotes terminal node
     ## 
-    ##   1) root 5917 2423718000.0  729.4604  
-    ##     2) temperature< 10.95 2605  285240200.0  352.0764  
-    ##       4) date< 17805.5 2074  104638200.0  269.0993 *
-    ##       5) date>=17805.5 531  110547200.0  676.1714  
-    ##        10) hour< 6.5 209    6542368.0  317.6077 *
-    ##        11) hour>=6.5 322   59693220.0  908.9037 *
-    ##     3) temperature>=10.95 3312 1475673000.0 1026.2860  
-    ##       6) hour< 14.5 1981  430744300.0  724.2580  
-    ##        12) solar_radiation< 0.305 998  122445700.0  463.0020 *
-    ##        13) solar_radiation>=0.305 983  171022800.0  989.5005  
-    ##          26) hour>=8.5 866   92152930.0  929.3487 *
-    ##          27) hour< 8.5 117   52544050.0 1434.7260  
-    ##            54) day=Saturday,Sunday 34     717665.6  625.2059 *
-    ##            55) day=Friday,Monday,Thursday,Tuesday,Wednesday 83   20418220.0 1766.3370 *
-    ##       7) hour>=14.5 1331  595262400.0 1475.8100  
-    ##        14) humidity>=83.5 138   29642710.0  414.6884 *
-    ##        15) humidity< 83.5 1193  392260500.0 1598.5550  
-    ##          30) temperature< 16.35 253   53200650.0 1224.6520 *
-    ##          31) temperature>=16.35 940  294169700.0 1699.1900  
-    ##            62) hour< 16.5 249   46011480.0 1303.5140 *
-    ##            63) hour>=16.5 691  195127300.0 1841.7710  
-    ##             126) hour>=22.5 82    4070461.0 1215.8780 *
-    ##             127) hour< 22.5 609  154608700.0 1926.0460 *
+    ##   1) root 5917 2451764000  732.1616  
+    ##     2) temperature< 12.05 2791  336434500  368.6087  
+    ##       4) date< 17813 2201  135785300  283.2840 *
+    ##       5) date>=17813 590  124847700  686.9136  
+    ##        10) hour< 6.5 220    7298253  303.7091 *
+    ##        11) hour>=6.5 370   66034370  914.7649 *
+    ##     3) temperature>=12.05 3126 1417085000 1056.7540  
+    ##       6) hour< 15.5 1992  445614200  771.4362  
+    ##        12) solar_radiation< 0.295 914  113577100  481.5000 *
+    ##        13) solar_radiation>=0.295 1078  190058800 1017.2630 *
+    ##       7) hour>=15.5 1134  524455500 1557.9470  
+    ##        14) humidity>=83.5 117   26478210  422.9060 *
+    ##        15) humidity< 83.5 1017  329903100 1688.5270  
+    ##          30) hour>=22.5 108    8610213 1117.0280 *
+    ##          31) hour< 22.5 909  281827900 1756.4280  
+    ##            62) temperature< 19.95 309   68034330 1502.8960 *
+    ##            63) temperature>=19.95 600  183702600 1886.9970  
+    ##             126) temperature>=31.4 122   29340650 1464.6720 *
+    ##             127) temperature< 31.4 478  127048600 1994.7870 *
 
 ``` r
 plot(treem, uniform = TRUE,
@@ -521,7 +517,7 @@ eval_results(train$rented_bike_count, predictions_train_cart, train)
 ```
 
     ##       RMSE   Rsquare
-    ## 1 342.5102 0.7136044
+    ## 1 361.2706 0.6850163
 
 ``` r
 # Step 3 - predicting and evaluating the model on test data
@@ -532,8 +528,8 @@ predictions_test_cart = predict(treem, newdata = test)
 eval_results(test$rented_bike_count, predictions_test_cart, test)
 ```
 
-    ##       RMSE   Rsquare
-    ## 1 357.0173 0.6923581
+    ##      RMSE Rsquare
+    ## 1 367.794 0.66446
 
 # gam model
 
@@ -546,31 +542,31 @@ summary(GAMsm)
     ## Call: gam(formula = rented_bike_count ~ ., data = train)
     ## Deviance Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -1136.26  -280.45   -56.07   213.25  2057.15 
+    ## -1134.23  -280.64   -55.71   211.78  2212.06 
     ## 
-    ## (Dispersion Parameter for gaussian family taken to be 186815.6)
+    ## (Dispersion Parameter for gaussian family taken to be 187947.9)
     ## 
-    ##     Null Deviance: 2423718298 on 5916 degrees of freedom
-    ## Residual Deviance: 1101651305 on 5897 degrees of freedom
-    ## AIC: 88633.5 
+    ##     Null Deviance: 2451764478 on 5916 degrees of freedom
+    ## Residual Deviance: 1108329032 on 5897 degrees of freedom
+    ## AIC: 88669.26 
     ## 
     ## Number of Local Scoring Iterations: 2 
     ## 
     ## Anova for Parametric Effects
     ##                   Df     Sum Sq   Mean Sq   F value    Pr(>F)    
-    ## date               1  377858496 377858496 2022.6287 < 2.2e-16 ***
-    ## hour               1  432730397 432730397 2316.3510 < 2.2e-16 ***
-    ## temperature        1  287938954 287938954 1541.3008 < 2.2e-16 ***
-    ## humidity           1  119534338 119534338  639.8522 < 2.2e-16 ***
-    ## wind_speed         1       5950      5950    0.0319   0.85836    
-    ## visibility         1     508348    508348    2.7211   0.09908 .  
-    ## solar_radiation    1   15142891  15142891   81.0580 < 2.2e-16 ***
-    ## rainfall           1   26679421  26679421  142.8116 < 2.2e-16 ***
-    ## snowfall           1     517492    517492    2.7701   0.09610 .  
-    ## seasons            3   45461735  15153912   81.1170 < 2.2e-16 ***
-    ## holiday            1    3619800   3619800   19.3763 1.092e-05 ***
-    ## day                6   12069171   2011529   10.7675 6.065e-12 ***
-    ## Residuals       5897 1101651305    186816                        
+    ## date               1  387199593 387199593 2060.1427 < 2.2e-16 ***
+    ## hour               1  429654913 429654913 2286.0314 < 2.2e-16 ***
+    ## temperature        1  303506367 303506367 1614.8427 < 2.2e-16 ***
+    ## humidity           1  107619329 107619329  572.6018 < 2.2e-16 ***
+    ## wind_speed         1     147572    147572    0.7852   0.37560    
+    ## visibility         1     924409    924409    4.9184   0.02661 *  
+    ## solar_radiation    1   15664119  15664119   83.3429 < 2.2e-16 ***
+    ## rainfall           1   34207744  34207744  182.0065 < 2.2e-16 ***
+    ## snowfall           1     498694    498694    2.6534   0.10338    
+    ## seasons            3   45961007  15320336   81.5137 < 2.2e-16 ***
+    ## holiday            1    4760790   4760790   25.3304 4.974e-07 ***
+    ## day                6   13290910   2215152   11.7860 3.517e-13 ***
+    ## Residuals       5897 1108329032    187948                        
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -625,7 +621,7 @@ rmse_fit1 <- Metrics::rmse(actual = test$rented_bike_count,
 print(rmse_fit1)
 ```
 
-    ## [1] 249.1308
+    ## [1] 246.6652
 
 ``` r
 min_MSE <- which.min(model_gbm$cv.error)
@@ -634,7 +630,7 @@ min_MSE <- which.min(model_gbm$cv.error)
 sqrt(model_gbm$cv.error[min_MSE])
 ```
 
-    ## [1] 251.236
+    ## [1] 252.4175
 
 ``` r
 ## [1] 23112.1
