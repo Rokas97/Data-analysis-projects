@@ -340,9 +340,37 @@ kable(rent_by_year)
 
 # Temperature
 
+``` r
+hist(clean_bike$temperature  ,xlab= "Temperature", main= "Temperature distribution" )
+```
+
+![](SeoulBikeRent_files/figure-gfm/temp-1.png)<!-- -->
+
+``` r
+summary(clean_bike$temperature)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##  -17.80    3.00   13.40   12.75   22.60   39.40
+
+``` r
+ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000)
+```
+
+![](SeoulBikeRent_files/figure-gfm/temp-2.png)<!-- -->
+
+``` r
+ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot() 
+```
+
+    ## Warning: Continuous x aesthetic -- did you forget aes(group=...)?
+
+![](SeoulBikeRent_files/figure-gfm/temp-3.png)<!-- -->
+
 # Hour
 
 ``` r
+knitr::knit_exit()
 ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point() +
   facet_wrap(~seasons, scales = "free_x") +
 ylab('Count of Rented Bikes')  +
@@ -353,323 +381,3 @@ ggtitle('Seasonal Bike Rent Dependency in Seoul')  +
 ```
 
 <img src="SeoulBikeRent_files/figure-gfm/unnamed-chunk-2-1.png" title="Figure 1.1 This is Caption" alt="Figure 1.1 This is Caption" width="100%" style="display: block; margin: auto auto auto 0;" />
-
-## Modeling analysis
-
-Data is split into training and test data sets with 70/30 % ratio
-
-``` r
-split = sort(sample(nrow(clean_bike), nrow(clean_bike)*.7))
-train<-clean_bike[split,]
-test<-clean_bike[-split,]
-dim(train)
-```
-
-    ## [1] 5917   13
-
-``` r
-dim(test)
-```
-
-    ## [1] 2537   13
-
-``` r
-glimpse(train)
-```
-
-    ## Rows: 5,917
-    ## Columns: 13
-    ## $ date              <date> 2017-12-01, 2017-12-01, 2017-12-01, 2017-12-01, 201~
-    ## $ rented_bike_count <int> 254, 204, 100, 181, 460, 930, 360, 449, 451, 447, 46~
-    ## $ hour              <int> 0, 1, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 19, 20, 21~
-    ## $ temperature       <dbl> -5.2, -5.5, -6.4, -6.6, -7.4, -7.6, -0.5, 1.7, 2.4, ~
-    ## $ humidity          <int> 37, 38, 37, 35, 38, 37, 21, 23, 25, 26, 36, 54, 77, ~
-    ## $ wind_speed        <dbl> 2.2, 0.8, 1.5, 1.3, 0.9, 1.1, 1.3, 1.4, 1.6, 2.0, 3.~
-    ## $ visibility        <int> 2000, 2000, 2000, 2000, 2000, 2000, 1936, 2000, 2000~
-    ## $ solar_radiation   <dbl> 0.00, 0.00, 0.00, 0.00, 0.00, 0.01, 0.94, 1.11, 1.16~
-    ## $ rainfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
-    ## $ snowfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
-    ## $ seasons           <fct> Winter, Winter, Winter, Winter, Winter, Winter, Wint~
-    ## $ holiday           <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
-    ## $ day               <chr> "Friday", "Friday", "Friday", "Friday", "Friday", "F~
-
-# Mars
-
-MARS
-
-``` r
-marsm <- earth(rented_bike_count ~ ., data = train, degree = 1)
-
-
-marsm
-summary(marsm)
-plot(marsm, which = 1)
-axis(1, at = 1:20)
-
-knitr::knit_exit()
-```
-
-``` r
-hyper_grid <- expand.grid(
-  degree = 1:3, 
-  nprune = seq(2, 30, length.out = 10) %>% floor()
-  )
-
-tuned_mars <- train(
-  x = subset(train, select = -rented_bike_count),
-  y = train$rented_bike_count,
-  method = "earth",
-  metric = "RMSE",
-  trControl = trainControl(method = "cv", number = 10),
-  tuneGrid = hyper_grid
-)
-tuned_mars$bestTune
-
-ggplot(tuned_mars)+
-  scale_x_continuous(breaks = seq(0, 30, by = 5))
-
-
-p1 <- vip(tuned_mars, num_features = 20, bar = FALSE, value = "gcv") + ggtitle("GCV")
-p2 <- vip(tuned_mars, num_features = 20, bar = FALSE, value = "rss") + ggtitle("RSS")
-
-gridExtra::grid.arrange(p1, p2, ncol = 2)
-```
-
-# decisions tree
-
-``` r
-treem <- rpart(rented_bike_count ~ ., 
-             method = "anova", data = train)
-treem
-```
-
-    ## n= 5917 
-    ## 
-    ## node), split, n, deviance, yval
-    ##       * denotes terminal node
-    ## 
-    ##   1) root 5917 2451764000  732.1616  
-    ##     2) temperature< 12.05 2791  336434500  368.6087  
-    ##       4) date< 17813 2201  135785300  283.2840 *
-    ##       5) date>=17813 590  124847700  686.9136  
-    ##        10) hour< 6.5 220    7298253  303.7091 *
-    ##        11) hour>=6.5 370   66034370  914.7649 *
-    ##     3) temperature>=12.05 3126 1417085000 1056.7540  
-    ##       6) hour< 15.5 1992  445614200  771.4362  
-    ##        12) solar_radiation< 0.295 914  113577100  481.5000 *
-    ##        13) solar_radiation>=0.295 1078  190058800 1017.2630 *
-    ##       7) hour>=15.5 1134  524455500 1557.9470  
-    ##        14) humidity>=83.5 117   26478210  422.9060 *
-    ##        15) humidity< 83.5 1017  329903100 1688.5270  
-    ##          30) hour>=22.5 108    8610213 1117.0280 *
-    ##          31) hour< 22.5 909  281827900 1756.4280  
-    ##            62) temperature< 19.95 309   68034330 1502.8960 *
-    ##            63) temperature>=19.95 600  183702600 1886.9970  
-    ##             126) temperature>=31.4 122   29340650 1464.6720 *
-    ##             127) temperature< 31.4 478  127048600 1994.7870 *
-
-``` r
-plot(treem, uniform = TRUE,
-          main = "... 
-                 Tree using Regression")
-text(treem, use.n = TRUE, cex = .7)
-```
-
-![](SeoulBikeRent_files/figure-gfm/decision%20tree-1.png)<!-- -->
-
-``` r
-# Step 1 - create the evaluation metrics function
-
-
-eval_results <- function(true, predicted, df) {
-
-  SSE <- sum((predicted - true)^2)
-
-  SST <- sum((true - mean(true))^2)
-
-  R_square <- 1 - SSE / SST
-
-  RMSE = sqrt(SSE/nrow(df))
-
-  
-
-# Model performance metrics
-
-  data.frame(
-
-    RMSE = RMSE,
-
-    Rsquare = R_square
-
-  )
-
-  
-
-}
-
-
-# Step 2 - predicting and evaluating the model on train data
-
-
-predictions_train_cart = predict(treem, data = train)
-
-eval_results(train$rented_bike_count, predictions_train_cart, train)
-```
-
-    ##       RMSE   Rsquare
-    ## 1 361.2706 0.6850163
-
-``` r
-# Step 3 - predicting and evaluating the model on test data
-
-
-predictions_test_cart = predict(treem, newdata = test)
-
-eval_results(test$rented_bike_count, predictions_test_cart, test)
-```
-
-    ##      RMSE Rsquare
-    ## 1 367.794 0.66446
-
-# gam model
-
-``` r
-GAMsm <- gam(rented_bike_count ~ .,data = train)
-summary(GAMsm)
-```
-
-    ## 
-    ## Call: gam(formula = rented_bike_count ~ ., data = train)
-    ## Deviance Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -1134.23  -280.64   -55.71   211.78  2212.06 
-    ## 
-    ## (Dispersion Parameter for gaussian family taken to be 187947.9)
-    ## 
-    ##     Null Deviance: 2451764478 on 5916 degrees of freedom
-    ## Residual Deviance: 1108329032 on 5897 degrees of freedom
-    ## AIC: 88669.26 
-    ## 
-    ## Number of Local Scoring Iterations: 2 
-    ## 
-    ## Anova for Parametric Effects
-    ##                   Df     Sum Sq   Mean Sq   F value    Pr(>F)    
-    ## date               1  387199593 387199593 2060.1427 < 2.2e-16 ***
-    ## hour               1  429654913 429654913 2286.0314 < 2.2e-16 ***
-    ## temperature        1  303506367 303506367 1614.8427 < 2.2e-16 ***
-    ## humidity           1  107619329 107619329  572.6018 < 2.2e-16 ***
-    ## wind_speed         1     147572    147572    0.7852   0.37560    
-    ## visibility         1     924409    924409    4.9184   0.02661 *  
-    ## solar_radiation    1   15664119  15664119   83.3429 < 2.2e-16 ***
-    ## rainfall           1   34207744  34207744  182.0065 < 2.2e-16 ***
-    ## snowfall           1     498694    498694    2.6534   0.10338    
-    ## seasons            3   45961007  15320336   81.5137 < 2.2e-16 ***
-    ## holiday            1    4760790   4760790   25.3304 4.974e-07 ***
-    ## day                6   13290910   2215152   11.7860 3.517e-13 ***
-    ## Residuals       5897 1108329032    187948                        
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-# GBM
-
-``` r
-model_gbm <- gbm(formula = rented_bike_count ~.,
-                data = train[,c(-1,-13)],
-                distribution = "gaussian",
-               cv.folds = 5,
-               interaction.depth = 2,
-                shrinkage = .01,
-                n.minobsinnode = 10,
-                n.trees = 5000,
-               n.cores = NULL, # will use all cores by defaul
-               verbose = FALSE)
- 
-
-print(model_gbm)
-```
-
-    ## gbm(formula = rented_bike_count ~ ., distribution = "gaussian", 
-    ##     data = train[, c(-1, -13)], n.trees = 5000, interaction.depth = 2, 
-    ##     n.minobsinnode = 10, shrinkage = 0.01, cv.folds = 5, verbose = FALSE, 
-    ##     n.cores = NULL)
-    ## A gradient boosted model with gaussian loss function.
-    ## 5000 iterations were performed.
-    ## The best cross-validation iteration was 5000.
-    ## There were 10 predictors of which 10 had non-zero influence.
-
-``` r
-# model performance
-perf_gbm1 = gbm.perf(model_gbm, method = "cv")
-print(perf_gbm1)
-```
-
-    ## [1] 5000
-
-``` r
-bike_prediction_1 <- stats::predict(
-                           # the model from above
-                          object = model_gbm, 
-                          # the testing data
-                          newdata = test,
-                          # this is the number we calculated above
-                          n.trees = perf_gbm1)
-
-rmse_fit1 <- Metrics::rmse(actual = test$rented_bike_count, 
-                           predicted = bike_prediction_1)
-
-
-print(rmse_fit1)
-```
-
-    ## [1] 246.6652
-
-``` r
-min_MSE <- which.min(model_gbm$cv.error)
-
-# get MSE and compute RMSE
-sqrt(model_gbm$cv.error[min_MSE])
-```
-
-    ## [1] 252.4175
-
-``` r
-## [1] 23112.1
-
-# plot loss function as a result of n trees added to the ensemble
-gbm.perf( model_gbm, method = "cv")
-```
-
-![](SeoulBikeRent_files/figure-gfm/GBM-1.png)<!-- -->
-
-    ## [1] 5000
-
-# XGboost
-
-``` r
-X_train = data.matrix(train[,-2])                  # independent variables for train
-y_train = train[,2]                                # dependent variables for train
-  
-X_test = data.matrix(test[,-2])                    # independent variables for test
-y_test = test[,2]                                   # dependent variables for test
-
-# convert the train and test data into xgboost matrix type.
-xgboost_train = xgb.DMatrix(data=X_train, label=y_train)
-xgboost_test = xgb.DMatrix(data=X_test, label=y_test)
-
-
-xgm <- xgboost(data = xgboost_train,                    # the data   
-                 max.depth=3,                # max depth 
-               scale_pos_weight = 1, 
-               early_stopping_rounds = 3,
-               mode="regression",
-                 nrounds=5000)                              # max number of boosting iterations
-
-summary(xgm)
-xgm
-
-#pred_test <- predict(xgm, xgboost_test)
-
-#pred_test
-```
-
-# Time-series forecast

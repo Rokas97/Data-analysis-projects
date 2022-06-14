@@ -186,14 +186,25 @@ rent_by_year <- clean_bike %>%
   summarise(total = sum(rented_bike_count), average_bike_rent_count = mean(rented_bike_count), average_temperature = mean(temperature))
 kable(rent_by_year)
 ```
+
+
+
 # Temperature
+```{r temp}
+hist(clean_bike$temperature  ,xlab= "Temperature", main= "Temperature distribution" )
 
+summary(clean_bike$temperature)
 
+ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000)
+ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot() 
+
+```
 
 
 # Hour
 
 ```{r , out.width='100%', fig.align = 'left', fig.cap= "Figure 1.1 This is Caption", warning= FALSE}
+knitr::knit_exit()
 ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point() +
   facet_wrap(~seasons, scales = "free_x") +
 ylab('Count of Rented Bikes')  +
