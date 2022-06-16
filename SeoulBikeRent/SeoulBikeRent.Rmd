@@ -100,6 +100,8 @@ library(gam) #for GAMs
 library(gbm) #for gbm
 library(Metrics) #for gbm
 library(xgboost)
+library(rstatix)  #for outliers identification
+
 ```
 ## Exploratory analysis
 
@@ -136,8 +138,8 @@ names(clean_bike)
 
 
 By using a `lubridate` package date is converted from char format to date format with `dmy` function.(day/month/year).
-Also all categorical character variables are changed to numerical values for calculations. New variable `day` added to `clean_bike` data frame
-to name weekdays for analysis. Weekdays are converted to numbers as well.
+Also categorical variable `holiday' is changed to numerical values for calculations and `seasons' names are changed to factors. New variable `day` added to `clean_bike` data frame
+to name weekdays for analysis. Weekdays are converted to factors as well.
 
 
 ```{r cleaning}
@@ -148,11 +150,11 @@ clean_bike$seasons <- as.factor(clean_bike$seasons)
 class(clean_bike$seasons)
 
 clean_bike$day <- weekdays(as.Date(clean_bike$date))
-
+clean_bike$day <- as.factor(clean_bike$day)
 
 ```
 
-By using `table` function it is possible now to count all the values. It is clea now that 'functioning day' has only 1 value. It means that bikes are rented in Seoul any time of the year. So we can remove this variable from the data frame 'clean_bike'.
+By using `table` function it is possible now to count all the values. It is clear now that 'functioning day' has only 1 value. It means that bikes are rented in Seoul any time of the year and any time of the day. So we can remove this variable from the data frame 'clean_bike'.
 
 ```{r tables for analysis}
 
@@ -187,23 +189,58 @@ rent_by_year <- clean_bike %>%
 kable(rent_by_year)
 ```
 
+# Hour
+
+After Using `table` function on `hour` variable it is clear that each hour has the same amount of records.
+The bar plots shows hourly rented bike dependency. The least amount bikes is rented 4 in the morning. There is a spiking in a graph during 8 in the morning. It is probably due to people going to work. The highest number of bikes rented is at the 18th hour. Around that time people finish working in Korea, so they are going home after work.
+
+```{r hour-a}
+table(clean_bike$hour)
+
+ggplot(clean_bike, aes(x= hour, y = rented_bike_count)) + geom_col() +  scale_x_continuous(breaks=seq(0,23,1)) + ggtitle("Bike rent count dependancy on hour")
+```
+
+Let's look for an outliers for each hour with the help of `boxplot`, `dplyr` package and `indtify_outliers` function, which looks for outliers with the help of first and third `quantiles` and `IQR`. 2 outlier points ar visible from the boxplot. After printing all the records with these outliers, we can see that there is nothing special about them, so they are removed using `anti-join`
+
+```{r hour-b}
+
+ggplot(clean_bike, aes(x= hour, y = rented_bike_count)) + geom_boxplot(aes(group = hour)) +  scale_x_continuous(breaks=seq(0,23,1)) +
+  coord_flip() + ggtitle("Bike rent count dependancy on hour")
+
+outliers_hour <- clean_bike %>%
+  group_by(hour) %>%
+  identify_outliers(rented_bike_count)
+outliers_hour
+
+clean_bike %>% anti_join(df1, by = c( "hour", "rented_bike_count"))
+
+```
+
+Very obvious pattern is observed when analyzing hourly bike rent by the day. During weekends  graphs are much smoother(ne peaks, like on weekdays) observed due to the fact that majority of people don't work on Saturday and Sunday.
+```{r hour-c}
+ggplot(clean_bike, aes(x= hour, y = rented_bike_count, fill = day)) + geom_col() +
+scale_x_continuous(breaks=seq(0,23,2))+ facet_wrap(~day) + theme(legend.position='none' ) + ggtitle("Daily bike rent count dependancy on hour")
+```
 
 
+Moving on, there is obviuos correlation between temperature and bike rent
 # Temperature
 ```{r temp}
-hist(clean_bike$temperature  ,xlab= "Temperature", main= "Temperature distribution" )
+hist(clean_bike$temperature  ,xlab= "Temperature", main= "Temperature distribution", xaxp = c(-20,40,24) )
 
 summary(clean_bike$temperature)
 
 ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000)
 ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot() 
 
+
 ```
 
 
-# Hour
+# Seasonal
 
 ```{r , out.width='100%', fig.align = 'left', fig.cap= "Figure 1.1 This is Caption", warning= FALSE}
+
 knitr::knit_exit()
 ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point() +
   facet_wrap(~seasons, scales = "free_x") +

@@ -2,7 +2,7 @@ Seoul bike rent analysis (still in progress)
 ================
 Rokas
 
-Last compiled on 14 June, 2022
+Last compiled on 16 June, 2022
 
 <style>
 body {
@@ -97,6 +97,7 @@ library(gam) #for GAMs
 library(gbm) #for gbm
 library(Metrics) #for gbm
 library(xgboost)
+library(rstatix)  #for outliers identification
 ```
 
 ## Exploratory analysis
@@ -338,6 +339,49 @@ kable(rent_by_year)
 | 2018 |    10 | 650675 |                978.4586 |           12.675188 |
 | 2018 |    11 | 465715 |                718.6960 |            7.364506 |
 
+# Hour
+
+``` r
+table(clean_bike$hour)
+```
+
+    ## 
+    ##   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19 
+    ## 352 352 352 352 351 352 351 353 353 352 352 353 353 352 352 353 353 351 352 352 
+    ##  20  21  22  23 
+    ## 353 353 353 352
+
+``` r
+ggplot(clean_bike, aes(x= hour, y = rented_bike_count)) + geom_col() +  scale_x_continuous(breaks=seq(0,23,1))
+```
+
+![](SeoulBikeRent_files/figure-gfm/hour-a-1.png)<!-- -->
+
+``` r
+ggplot(clean_bike, aes(x= hour, y = rented_bike_count)) + geom_boxplot(aes(group = hour)) +  scale_x_continuous(breaks=seq(0,23,1)) +
+  coord_flip()
+```
+
+![](SeoulBikeRent_files/figure-gfm/hour-a-2.png)<!-- -->
+
+calculatng
+
+``` r
+outliers_hour <- clean_bike %>%
+  group_by(hour) %>%
+  identify_outliers(rented_bike_count)
+outliers_hour
+```
+
+    ## # A tibble: 2 x 15
+    ##    hour date       rented_bike_count temperature humidity wind_speed visibility
+    ##   <int> <date>                 <int>       <dbl>    <int>      <dbl>      <int>
+    ## 1     2 2018-06-24              1254        20.9       87        1.8        222
+    ## 2     4 2018-06-13               421        18.7       74        0.9       1933
+    ## # ... with 8 more variables: solar_radiation <dbl>, rainfall <dbl>,
+    ## #   snowfall <dbl>, seasons <fct>, holiday <dbl>, day <chr>, is.outlier <lgl>,
+    ## #   is.extreme <lgl>
+
 # Temperature
 
 ``` r
@@ -367,7 +411,7 @@ ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot()
 
 ![](SeoulBikeRent_files/figure-gfm/temp-3.png)<!-- -->
 
-# Hour
+# Seasonal
 
 ``` r
 knitr::knit_exit()
