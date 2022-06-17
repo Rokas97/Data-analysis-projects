@@ -76,13 +76,29 @@ clean_bike <- clean_bike %>% select(-dew_point_temperature)
 str_clean
 
 
-#idk
+#
 rent_by_year <- clean_bike %>%
   mutate(year= year(clean_bike$date), month=month(clean_bike$date)) %>%
   group_by(year, month) %>%
   summarise(total = sum(rented_bike_count), average_bike_rent_count = mean(rented_bike_count), average_temperature = mean(temperature))
 kable(rent_by_year)
 
+
+
+
+ holiday<-clean_bike %>%
+   filter(holiday == 1) %>%
+  group_by(day, seasons) %>%
+   summarise( avg = mean(rented_bike_count)) %>%
+  ggplot( aes(day,avg)) + geom_col() + facet_W
+holiday
+  
+  
+  no_holiday <-clean_bike %>%
+    filter(holiday == 0) %>%
+    select(day, rented_bike_count) %>%
+    group_by(day) %>%
+    summarise( avg = mean(rented_bike_count)) %>%
 
 #hour
 table(clean_bike$hour)
@@ -134,7 +150,10 @@ ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot()
 ## ---- out.width='100%', fig.align = 'left', fig.cap= "Figure 1.1 This is Caption", warning= FALSE---------------------
 
 #knitr::knit_exit()
-ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point() +
+
+highlight <- clean_bike %>% filter(holiday==1)
+
+ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point(alpha=0.3) +
   facet_wrap(~seasons, scales = "free_x") +
 ylab('Count of Rented Bikes')  +
 xlab('Date') +
@@ -143,7 +162,13 @@ ggtitle('Seasonal Bike Rent Dependency in Seoul')  +
   scale_colour_viridis_c(option = "plasma")
 
 
-
+ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point(alpha=0.3) +
+  geom_point(data= highlight , aes(x=date, y =rented_bike_count), color ='black', size=4) +
+  ylab('Count of Rented Bikes')  +
+  xlab('Date') +
+  ggtitle('Seasonal Bike Rent Dependency in Seoul')  + 
+  scale_fill_viridis(direction = -1)+
+  scale_colour_viridis_c(option = "plasma")
 
 
 ## ----data splitting---------------------------------------------------------------------------------------------------

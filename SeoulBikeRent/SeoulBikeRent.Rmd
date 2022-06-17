@@ -179,6 +179,8 @@ corrplot(cor(clean_bike[c(2:11)]),type = "upper",col=COL2("RdBu",100))
 clean_bike <- clean_bike %>% select(-dew_point_temperature)
 ```
 
+With the help of `grouping`, `average_bike_rent_coount` and 'average_temperature` is calculated per month and year since there is one month of 2017. The most bikes were rented during June `n=1237` and September `n=1079` and temperatures 'T1=23.1' and `T2=21.7` accordingly. 
+
 ```{r tables, message = FALSE }
 
 
@@ -188,6 +190,34 @@ rent_by_year <- clean_bike %>%
   summarise(total = sum(rented_bike_count), average_bike_rent_count = mean(rented_bike_count), average_temperature = mean(temperature))
 kable(rent_by_year)
 ```
+Furthermore, seasonal bike rental analysis is carried out by using `date` and `seasons` variables in addition. It is evident that bike rent is highly dependent on the temperature. The lowest rent numbers are generated during the winter and highest in the summer. Also other was made with highlighted `holiday` points. There is no visual difference of bike rent during the holidays, so we can ignore it, during the analysis.
+
+
+# Seasonal
+
+```{r , out.width='100%', fig.align = 'left', fig.cap= "Figure 1.1 This is Caption", warning= FALSE}
+
+ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point() +
+  facet_wrap(~seasons, scales = "free_x") +
+ylab('Count of Rented Bikes')  +
+xlab('Date') +
+ggtitle('Seasonal Bike Rent Dependency in Seoul')  + 
+ scale_fill_viridis(direction = -1)+
+  scale_colour_viridis_c(option = "plasma")
+
+
+highlight <- clean_bike %>% filter(holiday==1)
+
+  ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point(alpha=0.3) +
+ geom_point(data= highlight , aes(x=date, y =rented_bike_count), color ='black', size=4) +
+ylab('Count of Rented Bikes')  +
+xlab('Date') +
+ggtitle('Seasonal Bike Rent Dependency in Seoul with highlighted holidays')  + 
+    scale_fill_viridis(direction = -1)+
+  scale_colour_viridis_c(option = "plasma")
+
+```
+
 
 # Hour
 
@@ -212,7 +242,7 @@ outliers_hour <- clean_bike %>%
   identify_outliers(rented_bike_count)
 outliers_hour
 
-clean_bike %>% anti_join(df1, by = c( "hour", "rented_bike_count"))
+clean_bike <- clean_bike %>% anti_join(outliers_hour, by = c( "hour", "rented_bike_count"))
 
 ```
 
@@ -221,6 +251,11 @@ Very obvious pattern is observed when analyzing hourly bike rent by the day. Dur
 ggplot(clean_bike, aes(x= hour, y = rented_bike_count, fill = day)) + geom_col() +
 scale_x_continuous(breaks=seq(0,23,2))+ facet_wrap(~day) + theme(legend.position='none' ) + ggtitle("Daily bike rent count dependancy on hour")
 ```
+
+
+
+
+
 
 
 Moving on, there is obviuos correlation between temperature and bike rent
@@ -237,22 +272,7 @@ ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot()
 ```
 
 
-# Seasonal
 
-```{r , out.width='100%', fig.align = 'left', fig.cap= "Figure 1.1 This is Caption", warning= FALSE}
-
-knitr::knit_exit()
-ggplot(clean_bike, aes( x=date, y =rented_bike_count, color= temperature)) + geom_point() +
-  facet_wrap(~seasons, scales = "free_x") +
-ylab('Count of Rented Bikes')  +
-xlab('Date') +
-ggtitle('Seasonal Bike Rent Dependency in Seoul')  + 
- scale_fill_viridis(direction = -1)+
-  scale_colour_viridis_c(option = "plasma")
-
-
-
-```
 
 
 
