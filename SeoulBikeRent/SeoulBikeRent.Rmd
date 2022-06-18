@@ -105,7 +105,7 @@ library(rstatix)  #for outliers identification
 ```
 ## Exploratory analysis
 
-Reading a file as a data.table and checking its structure and summary
+Reading a file as a data frame and checking its structure and summary
 
 ```{r reading csv file}
 seoul_bike <- read.csv("raw_seoul_bike_sharing.csv")
@@ -116,8 +116,8 @@ summary(seoul_bike)
 
 Data frame consists of `14` variables or columns and `8760` observations or rows.
 Let's look for `NA` values first and remove them by saving it in the new data frame.
-There are `295` NA values of `RENTED_BIKE_COlUMN`, and `11` `NA` values of `TEMPERATURE`.
-We can remove them
+There are `295` NA values of `RENTED_BIKE_COlUMN`, and `11 NA` values of `TEMPERATURE`.
+I can remove them.
 
 
 ```{r remvoing NA values}
@@ -138,7 +138,7 @@ names(clean_bike)
 
 
 By using a `lubridate` package date is converted from char format to date format with `dmy` function.(day/month/year).
-Also categorical variable `holiday' is changed to numerical values for calculations and `seasons' names are changed to factors. New variable `day` added to `clean_bike` data frame
+Also categorical variable `holiday` is changed to numerical values for calculations and `seasons` names are changed to factors. New variable `day` added to `clean_bike` data frame
 to name weekdays for analysis. Weekdays are converted to factors as well.
 
 
@@ -154,7 +154,7 @@ clean_bike$day <- as.factor(clean_bike$day)
 
 ```
 
-By using `table` function it is possible now to count all the values. It is clear now that 'functioning day' has only 1 value. It means that bikes are rented in Seoul any time of the year and any time of the day. So we can remove this variable from the data frame 'clean_bike'.
+By using `table` function it is possible now to count all the values. It is clear now that `functioning day` has only 1 value. It means that bikes are rented in Seoul any time of the year and any time of the day. So I can remove this variable from the `clean_bike` data frame .
 
 ```{r tables for analysis}
 
@@ -172,14 +172,14 @@ table(clean_bike$day)
 clean_bike <- clean_bike %>% select(-functioning_day)
 ```
 
-Now I can calculate correlation and look for variables that correlate the most with `rented_bike_count`. In other words, we are looking for the most paramount factors for bike rent. Also 'dew_point_temperature' is removed because it highly correlates with temperature and for predictive analysis it won't be useful. One 'temperature' variable is enough for analysis. It can be seen that 
+Now I can calculate correlation and look for variables that correlate the most with `rented_bike_count`. In other words, we are looking for the most paramount factors for bike rent. Also `dew_point_temperature` is removed because it highly correlates with temperature and for predictive analysis it won't be useful. One `temperature` variable is enough for analysis. 
 
 ```{r correlation , out.width='100%', fig.align = 'left', fig.cap= "Figure 1.1 This is Caption"}
 corrplot(cor(clean_bike[c(2:11)]),type = "upper",col=COL2("RdBu",100))
 clean_bike <- clean_bike %>% select(-dew_point_temperature)
 ```
 
-With the help of `grouping`, `average_bike_rent_coount` and 'average_temperature` is calculated per month and year since there is one month of 2017. The most bikes were rented during June `n=1237` and September `n=1079` and temperatures 'T1=23.1' and `T2=21.7` accordingly. 
+With the help of `grouping`, `average_bike_rent_coount` and `average_temperature` is calculated per month and year since there is one month of 2017. The most bikes were rented during June `n=1237` and September `n=1079` and temperatures `T1=23.1` and `T2=21.7` accordingly. 
 
 ```{r tables, message = FALSE }
 
@@ -258,24 +258,42 @@ scale_x_continuous(breaks=seq(0,23,2))+ facet_wrap(~day) + theme(legend.position
 
 
 
-Moving on, there is obviuos correlation between temperature and bike rent
+Moving on, there is obvious correlation between temperature and bike rent that already has been shown in the table and seasonal bike rent graph. Temperature distribution is closest to the normal distribution, it is visible in the `histogram`. in the scatter plot of `temperature` vs `rented_bike_count` with the help of fitting nonlinear line with `smooth` function, a clear trend is observed of rent numbers rising until temperature of around 29 degrees is reached and after that line starts going down pretty rapidly due to hot weather.
 # Temperature
 ```{r temp}
 hist(clean_bike$temperature  ,xlab= "Temperature", main= "Temperature distribution", xaxp = c(-20,40,24) )
 
 summary(clean_bike$temperature)
 
-ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000)
-ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot() 
+ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000) +geom_smooth()
+
+
 
 
 ```
 
 
+#humidity
+
+`Humidity` distribution is a little bit more left-skewed compared to 'temperature's' one but it still close to normal distribution. So mean as a metric will be used for analysis of high and low humidity marked as a red line in the `histogram`. New variable `higher` is created inspect how rent numbers numbers alter when humidity is higher then average and lower and the data is saved in the new data frame hum. `Rented_bike_count` decreases the closer humidity approaches 100 percent humidity.
+
+
+```{r hum}
+
+hist(clean_bike$humidity  ,xlab= "Humidity", main= "Humidity distribution" )
+abline(v = mean(clean_bike$humidity),                       
+       col = "red",
+       lwd = 3)
+hum <- clean_bike %>%
+  mutate(higher_humidity= humidity > median(humidity))
+ hum$higher_humidity<- as.factor(ifelse(hum$higher == TRUE, "High", "Low"))
+
+ggplot(hum, aes(humidity, rented_bike_count, color = higher_humidity)) + geom_point() + facet_wrap(~seasons)
 
 
 
 
+```
 
 ## Modeling analysis
 

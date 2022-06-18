@@ -2,7 +2,7 @@ Seoul bike rent analysis (still in progress)
 ================
 Rokas
 
-Last compiled on 17 June, 2022
+Last compiled on 18 June, 2022
 
 <style>
 body {
@@ -102,7 +102,7 @@ library(rstatix)  #for outliers identification
 
 ## Exploratory analysis
 
-Reading a file as a data.table and checking its structure and summary
+Reading a file as a data frame and checking its structure and summary
 
 ``` r
 seoul_bike <- read.csv("raw_seoul_bike_sharing.csv")
@@ -165,8 +165,8 @@ summary(seoul_bike)
 Data frame consists of `14` variables or columns and `8760` observations
 or rows. Let’s look for `NA` values first and remove them by saving it
 in the new data frame. There are `295` NA values of
-`RENTED_BIKE_COlUMN`, and `11` `NA` values of `TEMPERATURE`. We can
-remove them
+`RENTED_BIKE_COlUMN`, and `11 NA` values of `TEMPERATURE`. I can remove
+them.
 
 ``` r
 sapply(seoul_bike, function(x) sum(is.na(x)))
@@ -222,11 +222,10 @@ names(clean_bike)
 
 By using a `lubridate` package date is converted from char format to
 date format with `dmy` function.(day/month/year). Also categorical
-variable
-`holiday' is changed to numerical values for calculations and`seasons’
-names are changed to factors. New variable `day` added to `clean_bike`
-data frame to name weekdays for analysis. Weekdays are converted to
-factors as well.
+variable `holiday` is changed to numerical values for calculations and
+`seasons` names are changed to factors. New variable `day` added to
+`clean_bike` data frame to name weekdays for analysis. Weekdays are
+converted to factors as well.
 
 ``` r
 clean_bike$date <- dmy(clean_bike$date)
@@ -244,9 +243,9 @@ clean_bike$day <- as.factor(clean_bike$day)
 ```
 
 By using `table` function it is possible now to count all the values. It
-is clear now that ‘functioning day’ has only 1 value. It means that
+is clear now that `functioning day` has only 1 value. It means that
 bikes are rented in Seoul any time of the year and any time of the day.
-So we can remove this variable from the data frame ‘clean_bike’.
+So I can remove this variable from the `clean_bike` data frame .
 
 ``` r
 table(clean_bike$functioning_day)
@@ -304,10 +303,10 @@ clean_bike <- clean_bike %>% select(-functioning_day)
 
 Now I can calculate correlation and look for variables that correlate
 the most with `rented_bike_count`. In other words, we are looking for
-the most paramount factors for bike rent. Also ‘dew_point_temperature’
+the most paramount factors for bike rent. Also `dew_point_temperature`
 is removed because it highly correlates with temperature and for
-predictive analysis it won’t be useful. One ‘temperature’ variable is
-enough for analysis. It can be seen that
+predictive analysis it won’t be useful. One `temperature` variable is
+enough for analysis.
 
 ``` r
 corrplot(cor(clean_bike[c(2:11)]),type = "upper",col=COL2("RdBu",100))
@@ -320,8 +319,9 @@ clean_bike <- clean_bike %>% select(-dew_point_temperature)
 ```
 
 With the help of `grouping`, `average_bike_rent_coount` and
-’average_temperature`is calculated per month and year since there is one month of 2017. The most bikes were rented during June`n=1237`and September`n=1079`and temperatures 'T1=23.1' and`T2=21.7\`
-accordingly.
+`average_temperature` is calculated per month and year since there is
+one month of 2017. The most bikes were rented during June `n=1237` and
+September `n=1079` and temperatures `T1=23.1` and `T2=21.7` accordingly.
 
 ``` r
 rent_by_year <- clean_bike %>%
@@ -453,8 +453,14 @@ scale_x_continuous(breaks=seq(0,23,2))+ facet_wrap(~day) + theme(legend.position
 
 ![](SeoulBikeRent_files/figure-gfm/hour-c-1.png)<!-- -->
 
-Moving on, there is obviuos correlation between temperature and bike
-rent \# Temperature
+Moving on, there is obvious correlation between temperature and bike
+rent that already has been shown in the table and seasonal bike rent
+graph. Temperature distribution is closest to the normal distribution,
+it is visible in the `histogram`. in the scatter plot of `temperature`
+vs `rented_bike_count` with the help of fitting nonlinear line with
+`smooth` function, a clear trend is observed of rent numbers rising
+until temperature of around 29 degrees is reached and after that line
+starts going down pretty rapidly due to hot weather. \# Temperature
 
 ``` r
 hist(clean_bike$temperature  ,xlab= "Temperature", main= "Temperature distribution", xaxp = c(-20,40,24) )
@@ -470,18 +476,42 @@ summary(clean_bike$temperature)
     ##  -17.80    3.00   13.40   12.75   22.60   39.40
 
 ``` r
-ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000)
+ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000) +geom_smooth()
 ```
+
+    ## `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
 
 ![](SeoulBikeRent_files/figure-gfm/temp-2.png)<!-- -->
 
+\#humidity
+
+`Humidity` distribution is a little bit more left-skewed compared to
+‘temperature’s’ one but it still close to normal distribution. So mean
+as a metric will be used for analysis of high and low humidity marked as
+a red line in the `histogram`. New variable `higher` is created inspect
+how rent numbers numbers alter when humidity is higher then average and
+lower and the data is saved in the new data frame hum.
+`Rented_bike_count` decreases the closer humidity approaches 100 percent
+humidity.
+
 ``` r
-ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot() 
+hist(clean_bike$humidity  ,xlab= "Humidity", main= "Humidity distribution" )
+abline(v = mean(clean_bike$humidity),                       
+       col = "red",
+       lwd = 3)
 ```
 
-    ## Warning: Continuous x aesthetic -- did you forget aes(group=...)?
+![](SeoulBikeRent_files/figure-gfm/hum-1.png)<!-- -->
 
-![](SeoulBikeRent_files/figure-gfm/temp-3.png)<!-- -->
+``` r
+hum <- clean_bike %>%
+  mutate(higher_humidity= humidity > median(humidity))
+ hum$higher_humidity<- as.factor(ifelse(hum$higher == TRUE, "High", "Low"))
+
+ggplot(hum, aes(humidity, rented_bike_count, color = higher_humidity)) + geom_point() + facet_wrap(~seasons)
+```
+
+![](SeoulBikeRent_files/figure-gfm/hum-2.png)<!-- -->
 
 ## Modeling analysis
 
@@ -509,13 +539,13 @@ glimpse(train)
     ## Rows: 5,916
     ## Columns: 13
     ## $ date              <date> 2017-12-01, 2017-12-01, 2017-12-01, 2017-12-01, 201~
-    ## $ rented_bike_count <int> 254, 204, 107, 78, 100, 181, 460, 490, 339, 360, 449~
-    ## $ hour              <int> 0, 1, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 16, 17, 19, ~
-    ## $ temperature       <dbl> -5.2, -5.5, -6.2, -6.0, -6.4, -6.6, -7.4, -6.5, -3.5~
-    ## $ humidity          <int> 37, 38, 40, 36, 37, 35, 38, 27, 24, 21, 23, 25, 54, ~
-    ## $ wind_speed        <dbl> 2.2, 0.8, 0.9, 2.3, 1.5, 1.3, 0.9, 0.5, 1.2, 1.3, 1.~
-    ## $ visibility        <int> 2000, 2000, 2000, 2000, 2000, 2000, 2000, 1928, 1996~
-    ## $ solar_radiation   <dbl> 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.23, 0.65~
+    ## $ rented_bike_count <int> 173, 107, 78, 100, 181, 460, 490, 339, 360, 447, 463~
+    ## $ hour              <int> 2, 3, 4, 5, 6, 7, 9, 10, 11, 14, 15, 16, 17, 18, 19,~
+    ## $ temperature       <dbl> -6.0, -6.2, -6.0, -6.4, -6.6, -7.4, -6.5, -3.5, -0.5~
+    ## $ humidity          <int> 39, 40, 36, 37, 35, 38, 27, 24, 21, 26, 36, 54, 58, ~
+    ## $ wind_speed        <dbl> 1.0, 0.9, 2.3, 1.5, 1.3, 0.9, 0.5, 1.2, 1.3, 2.0, 3.~
+    ## $ visibility        <int> 2000, 2000, 2000, 2000, 2000, 2000, 1928, 1996, 1936~
+    ## $ solar_radiation   <dbl> 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.23, 0.65, 0.94~
     ## $ rainfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
     ## $ snowfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
     ## $ seasons           <fct> Winter, Winter, Winter, Winter, Winter, Winter, Wint~
@@ -577,29 +607,31 @@ treem
     ## node), split, n, deviance, yval
     ##       * denotes terminal node
     ## 
-    ##  1) root 5916 2442319000  726.2262  
-    ##    2) temperature< 11.95 2765  325314500  360.5631  
-    ##      4) date< 17595.5 1588   35963090  225.0926 *
-    ##      5) date>=17595.5 1177  220888000  543.3390  
-    ##       10) hour< 6.5 485   14034650  250.8165 *
-    ##       11) hour>=6.5 692  136265300  748.3584  
-    ##         22) humidity>=79.5 137   17846710  350.8467 *
-    ##         23) humidity< 79.5 555   91426730  846.4829 *
-    ##    3) temperature>=11.95 3151 1422880000 1047.0950  
-    ##      6) hour< 14.5 1853  413780400  738.2607  
-    ##       12) solar_radiation< 0.205 892  101407700  451.9114 *
-    ##       13) solar_radiation>=0.205 961  171343500 1004.0500  
-    ##         26) hour>=8.5 817   95087750  944.6340 *
-    ##         27) hour< 8.5 144   57007650 1341.1530  
-    ##           54) day=Saturday,Sunday 45    1135800  625.0889 *
-    ##           55) day=Friday,Monday,Thursday,Tuesday,Wednesday 99   22310200 1666.6360 *
-    ##      7) hour>=14.5 1298  580056600 1487.9820  
-    ##       14) humidity>=83.5 136   28344820  385.6838 *
-    ##       15) humidity< 83.5 1162  367123000 1616.9940  
-    ##         30) hour< 16.5 281   50604570 1296.3560 *
-    ##         31) hour>=16.5 881  278414800 1719.2630  
-    ##           62) solar_radiation< 0.025 475   89115720 1480.4380 *
-    ##           63) solar_radiation>=0.025 406  130508900 1998.6770 *
+    ##   1) root 5916 2447684000.0  730.8867  
+    ##     2) temperature< 12.05 2793  339977600.0  369.3580  
+    ##       4) date< 17595.5 1583   38558320.0  228.1074 *
+    ##       5) date>=17595.5 1210  228515900.0  554.1512  
+    ##        10) hour< 6.5 483   15466590.0  260.7350 *
+    ##        11) hour>=6.5 727  143839700.0  749.0894  
+    ##          22) humidity>=81.5 130   15002090.0  311.5385 *
+    ##          23) humidity< 81.5 597   98529380.0  844.3685 *
+    ##     3) temperature>=12.05 3123 1416174000.0 1054.2140  
+    ##       6) hour< 15.5 1993  446504200.0  769.1274  
+    ##        12) solar_radiation< 0.305 945  116569800.0  479.7312 *
+    ##        13) solar_radiation>=0.305 1048  179425000.0 1030.0810  
+    ##          26) hour>=8.5 943  112192400.0  984.4846 *
+    ##          27) hour< 8.5 105   47664510.0 1439.5810  
+    ##            54) day=Saturday,Sunday 34     662478.5  614.4706 *
+    ##            55) day=Friday,Monday,Thursday,Tuesday,Wednesday 71   12769900.0 1834.7040 *
+    ##       7) hour>=15.5 1130  522005000.0 1557.0250  
+    ##        14) humidity>=83.5 111   23519690.0  401.5135 *
+    ##        15) humidity< 83.5 1019  334133100.0 1682.8950  
+    ##          30) hour>=22.5 109    8207008.0 1127.5960 *
+    ##          31) hour< 22.5 910  288289300.0 1749.4090  
+    ##            62) hour< 16.5 155   31014180.0 1325.1940 *
+    ##            63) hour>=16.5 755  223655000.0 1836.4990  
+    ##             126) temperature< 16.85 149   30246520.0 1407.7380 *
+    ##             127) temperature>=16.85 606  159282000.0 1941.9210 *
 
 ``` r
 plot(treem, uniform = TRUE,
@@ -650,7 +682,7 @@ eval_results(train$rented_bike_count, predictions_train_cart, train)
 ```
 
     ##       RMSE   Rsquare
-    ## 1 338.4795 0.7224823
+    ## 1 334.5196 0.7295319
 
 ``` r
 # Step 3 - predicting and evaluating the model on test data
@@ -661,8 +693,8 @@ predictions_test_cart = predict(treem, newdata = test)
 eval_results(test$rented_bike_count, predictions_test_cart, test)
 ```
 
-    ##       RMSE   Rsquare
-    ## 1 348.2712 0.7019746
+    ##       RMSE  Rsquare
+    ## 1 347.6015 0.701542
 
 # gam model
 
@@ -675,31 +707,31 @@ summary(GAMsm)
     ## Call: gam(formula = rented_bike_count ~ ., data = train)
     ## Deviance Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -1123.57  -275.51   -55.04   207.51  1991.35 
+    ## -1133.86  -272.86   -54.97   205.55  2223.01 
     ## 
-    ## (Dispersion Parameter for gaussian family taken to be 183764.2)
+    ## (Dispersion Parameter for gaussian family taken to be 185205)
     ## 
-    ##     Null Deviance: 2442318597 on 5915 degrees of freedom
-    ## Residual Deviance: 1083473838 on 5896 degrees of freedom
-    ## AIC: 88521.1 
+    ##     Null Deviance: 2447684248 on 5915 degrees of freedom
+    ## Residual Deviance: 1091968478 on 5896 degrees of freedom
+    ## AIC: 88567.3 
     ## 
     ## Number of Local Scoring Iterations: 2 
     ## 
     ## Anova for Parametric Effects
     ##                   Df     Sum Sq   Mean Sq   F value    Pr(>F)    
-    ## date               1  378079494 378079494 2057.4163 < 2.2e-16 ***
-    ## hour               1  439583320 439583320 2392.1051 < 2.2e-16 ***
-    ## temperature        1  306712074 306712074 1669.0522 < 2.2e-16 ***
-    ## humidity           1  133419960 133419960  726.0388 < 2.2e-16 ***
-    ## wind_speed         1     141264    141264    0.7687 0.3806486    
-    ## visibility         1    2703399   2703399   14.7112 0.0001266 ***
-    ## solar_radiation    1   13100663  13100663   71.2906 < 2.2e-16 ***
-    ## rainfall           1   31476907  31476907  171.2896 < 2.2e-16 ***
-    ## snowfall           1     201408    201408    1.0960 0.2951858    
-    ## seasons            3   40159360  13386453   72.8458 < 2.2e-16 ***
-    ## holiday            1    4148358   4148358   22.5744 2.070e-06 ***
-    ## day                6    9118553   1519759    8.2702 6.115e-09 ***
-    ## Residuals       5896 1083473838    183764                        
+    ## date               1  384797503 384797503 2077.6846 < 2.2e-16 ***
+    ## hour               1  431507508 431507508 2329.8917 < 2.2e-16 ***
+    ## temperature        1  305663840 305663840 1650.4084 < 2.2e-16 ***
+    ## humidity           1  125530117 125530117  677.7902 < 2.2e-16 ***
+    ## wind_speed         1     106050    106050    0.5726 0.4492543    
+    ## visibility         1    2189022   2189022   11.8195 0.0005902 ***
+    ## solar_radiation    1   15562287  15562287   84.0274 < 2.2e-16 ***
+    ## rainfall           1   29922522  29922522  161.5644 < 2.2e-16 ***
+    ## snowfall           1     233551    233551    1.2610 0.2615003    
+    ## seasons            3   42415814  14138605   76.3403 < 2.2e-16 ***
+    ## holiday            1    3413869   3413869   18.4329 1.788e-05 ***
+    ## day                6   14373687   2395615   12.9349 1.398e-14 ***
+    ## Residuals       5896 1091968478    185205                        
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -727,7 +759,7 @@ print(model_gbm)
     ##     n.cores = NULL)
     ## A gradient boosted model with gaussian loss function.
     ## 5000 iterations were performed.
-    ## The best cross-validation iteration was 4998.
+    ## The best cross-validation iteration was 5000.
     ## There were 10 predictors of which 10 had non-zero influence.
 
 ``` r
@@ -736,7 +768,7 @@ perf_gbm1 = gbm.perf(model_gbm, method = "cv")
 print(perf_gbm1)
 ```
 
-    ## [1] 4998
+    ## [1] 5000
 
 ``` r
 bike_prediction_1 <- stats::predict(
@@ -754,7 +786,7 @@ rmse_fit1 <- Metrics::rmse(actual = test$rented_bike_count,
 print(rmse_fit1)
 ```
 
-    ## [1] 253.8354
+    ## [1] 253.6741
 
 ``` r
 min_MSE <- which.min(model_gbm$cv.error)
@@ -763,7 +795,7 @@ min_MSE <- which.min(model_gbm$cv.error)
 sqrt(model_gbm$cv.error[min_MSE])
 ```
 
-    ## [1] 250.9272
+    ## [1] 251.7518
 
 ``` r
 ## [1] 23112.1
@@ -774,7 +806,7 @@ gbm.perf( model_gbm, method = "cv")
 
 ![](SeoulBikeRent_files/figure-gfm/GBM-1.png)<!-- -->
 
-    ## [1] 4998
+    ## [1] 5000
 
 # XGboost
 

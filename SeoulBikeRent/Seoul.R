@@ -135,11 +135,40 @@ hist(clean_bike$temperature  ,xlab= "Temperature", main= "Temperature distributi
 
 summary(clean_bike$temperature)
 
-ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000)
-ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot() 
+ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,4000) +geom_smooth()
+ggplot(clean_bike, aes(hour, temperature)) + geom_boxplot(aes(group=hour)) +facet_wrap(~seasons)
 
 
 
+
+
+ggplot(clean_bike, aes(temperature, rented_bike_count, color=humidity)) + geom_point() + ylim(0,4000) +geom_smooth()
+
+
+
+
+#hum
+hum_autumn<- hum%>% filter(seasons == "Autumn") 
+hum_summer<- hum%>% filter(seasons == "Summer") 
+hum_spring<- hum%>% filter(seasons == "Spring") 
+hum_aWinter<- hum%>% filter(seasons == "Winter") 
+
+mean(clean_bike$humidity)
+median(clean_bike$humidity)
+
+
+hist(clean_bike$humidity  ,xlab= "Humidity", main= "Humidity distribution" )
+abline(v = mean(clean_bike$humidity),                       # Add line for mean
+       col = "red",
+       lwd = 3)
+
+hum <- clean_bike %>%
+  mutate(higher_humidity= humidity > median(humidity))
+ hum$higher_humidity<- as.factor(ifelse(hum$higher == TRUE, "High", "Low"))
+
+ggplot(hum, aes(humidity, rented_bike_count, color = higher_humidity)) + geom_point() + facet_wrap(~seasons)
+
+ggplot(hum, aes(higher_humidity, rented_bike_count, color = higher_humidity)) + geom_col(aes(seasons)) 
 
 
 
