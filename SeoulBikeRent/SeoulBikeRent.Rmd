@@ -275,7 +275,7 @@ ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,
 
 #humidity
 
-`Humidity` distribution is a little bit more left-skewed compared to 'temperature's' one but it still close to normal distribution. So mean as a metric will be used for analysis of high and low humidity marked as a red line in the `histogram`. New variable `higher` is created inspect how rent numbers numbers alter when humidity is higher then average and lower and the data is saved in the new data frame hum. `Rented_bike_count` decreases the closer humidity approaches 100 percent humidity.
+`Humidity` distribution is a little bit more left-skewed compared to 'temperature's' one but it still close to normal distribution. So mean as a metric will be used for analysis of high and low humidity marked as a red line in the `histogram`. New variable `higher` is created inspect how rent numbers numbers alter when humidity is higher then average and lower and the data is saved in the new data frame hum. `Rented_bike_count`  decreases the closer humidity approaches 100 percent humidity. By comparing their averages, it is visible, that average bike rent count drops when there is high humidity quite a lot(mostly probably due to rain, fog or other phenomena).
 
 
 ```{r hum}
@@ -288,12 +288,48 @@ hum <- clean_bike %>%
   mutate(higher_humidity= humidity > median(humidity))
  hum$higher_humidity<- as.factor(ifelse(hum$higher == TRUE, "High", "Low"))
 
+ 
+  hum1_low <- hum   %>%
+   group_by(seasons, higher_humidity)%>%
+   summarize(mean=mean(rented_bike_count),count = n())
+ 
+ 
 ggplot(hum, aes(humidity, rented_bike_count, color = higher_humidity)) + geom_point() + facet_wrap(~seasons)
+
+ggplot(hum, aes(higher_humidity, rented_bike_count, fill = higher_humidity)) + geom_bar( stat = "summary", fun = "mean") + facet_wrap(~seasons)
 
 
 
 
 ```
+
+# wind_speed
+Since Seoul is a big city with not many open areas, it has average `wind_speed` of `2 m/s`, which is very low and the highest `7.4` which is still classified as low wind, so we can see in the numbers that there is a small change in bike rent numbers when speed reaches wind speeds close to `4 m/s`, but is pretty rare event.
+
+
+```{r wind}
+
+hist(clean_bike$wind_speed  ,xlab= "Wind speed", main= "Wind speed distribution" )
+ggplot(clean_bike, aes(wind_speed, rented_bike_count)) + geom_point() + geom_smooth()
+
+summary(clean_bike$wind_speed )
+```
+
+
+# Visibility
+
+Big part of visibility data is distributed towards high visibility. Only when visibility is close 0 then rent numbers are really low, but there are a few data points of a very low visibility, and from 700 and higher, bike rent count stabilizes.  
+
+
+```{r vis}
+hist(clean_bike$visibility ,xlab= "Visibility", main= "Visibility distribution" )
+
+
+ggplot(clean_bike, aes(visibility, rented_bike_count)) + geom_point() + geom_smooth()
+
+
+```
+# solar radiation
 
 ## Modeling analysis
 
@@ -442,17 +478,13 @@ model_gbm <- gbm(formula = rented_bike_count ~.,
 
 print(model_gbm)
 
-# model performance
 perf_gbm1 = gbm.perf(model_gbm, method = "cv")
 print(perf_gbm1)
 
 
 bike_prediction_1 <- stats::predict(
-                           # the model from above
                           object = model_gbm, 
-                          # the testing data
                           newdata = test,
-                          # this is the number we calculated above
                           n.trees = perf_gbm1)
 
 rmse_fit1 <- Metrics::rmse(actual = test$rented_bike_count, 
@@ -463,11 +495,9 @@ print(rmse_fit1)
 
 min_MSE <- which.min(model_gbm$cv.error)
 
-# get MSE and compute RMSE
 sqrt(model_gbm$cv.error[min_MSE])
-## [1] 23112.1
 
-# plot loss function as a result of n trees added to the ensemble
+
 gbm.perf( model_gbm, method = "cv")
 
 

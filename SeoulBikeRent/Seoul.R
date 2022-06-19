@@ -166,11 +166,36 @@ hum <- clean_bike %>%
   mutate(higher_humidity= humidity > median(humidity))
  hum$higher_humidity<- as.factor(ifelse(hum$higher == TRUE, "High", "Low"))
 
+ 
+
+ 
+ hum1_cc <- hum   %>%
+   group_by(seasons, higher_humidity)%>%
+   summarize(mean=median(rented_bike_count),count = n())
+ 
+ 
 ggplot(hum, aes(humidity, rented_bike_count, color = higher_humidity)) + geom_point() + facet_wrap(~seasons)
 
-ggplot(hum, aes(higher_humidity, rented_bike_count, color = higher_humidity)) + geom_col(aes(seasons)) 
+ggplot(hum, aes(higher_humidity, rented_bike_count, fill = higher_humidity)) + geom_bar( stat = "summary", fun = "mean") + facet_wrap(~seasons)
+
+#wind_speed
+hist(clean_bike$wind_speed  ,xlab= "Wind speed", main= "Wind speed distribution" )
+ggplot(clean_bike, aes(wind_speed, rented_bike_count)) + geom_point() + geom_smooth()
+
+summary(clean_bike$wind_speed )
 
 
+#visibility
+hist(clean_bike$visibility ,xlab= "Visibility", main= "Visibility distribution" )
+
+
+ggplot(clean_bike, aes(visibility, rented_bike_count)) + geom_point() + geom_smooth
+
+sum(clean_bike$visibility > 1800)
+sum(clean_bike$visibility <1800)
+
+
+#solar_radiation
 
 
 

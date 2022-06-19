@@ -2,7 +2,7 @@ Seoul bike rent analysis (still in progress)
 ================
 Rokas
 
-Last compiled on 18 June, 2022
+Last compiled on 19 June, 2022
 
 <style>
 body {
@@ -492,7 +492,9 @@ a red line in the `histogram`. New variable `higher` is created inspect
 how rent numbers numbers alter when humidity is higher then average and
 lower and the data is saved in the new data frame hum.
 `Rented_bike_count` decreases the closer humidity approaches 100 percent
-humidity.
+humidity. By comparing their averages, it is visible, that average bike
+rent count drops when there is high humidity quite a lot(mostly probably
+due to rain, fog or other phenomena).
 
 ``` r
 hist(clean_bike$humidity  ,xlab= "Humidity", main= "Humidity distribution" )
@@ -508,10 +510,76 @@ hum <- clean_bike %>%
   mutate(higher_humidity= humidity > median(humidity))
  hum$higher_humidity<- as.factor(ifelse(hum$higher == TRUE, "High", "Low"))
 
+ 
+  hum1_low <- hum   %>%
+   group_by(seasons, higher_humidity)%>%
+   summarize(mean=mean(rented_bike_count),count = n())
+```
+
+    ## `summarise()` has grouped output by 'seasons'. You can override using the
+    ## `.groups` argument.
+
+``` r
 ggplot(hum, aes(humidity, rented_bike_count, color = higher_humidity)) + geom_point() + facet_wrap(~seasons)
 ```
 
 ![](SeoulBikeRent_files/figure-gfm/hum-2.png)<!-- -->
+
+``` r
+ggplot(hum, aes(higher_humidity, rented_bike_count, fill = higher_humidity)) + geom_bar( stat = "summary", fun = "mean") + facet_wrap(~seasons)
+```
+
+![](SeoulBikeRent_files/figure-gfm/hum-3.png)<!-- -->
+
+# wind_speed
+
+Since Seoul is a big city with not many open areas, it has average
+`wind_speed` of `2 m/s`, which is very low and the highest `7.4` which
+is still classified as low wind, so we can see in the numbers that there
+is a small change in bike rent numbers when speed reaches wind speeds
+close to `4 m/s`, but is pretty rare event.
+
+``` r
+hist(clean_bike$wind_speed  ,xlab= "Wind speed", main= "Wind speed distribution" )
+```
+
+![](SeoulBikeRent_files/figure-gfm/wind-1.png)<!-- -->
+
+``` r
+ggplot(clean_bike, aes(wind_speed, rented_bike_count)) + geom_point() + geom_smooth()
+```
+
+    ## `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+
+![](SeoulBikeRent_files/figure-gfm/wind-2.png)<!-- -->
+
+``` r
+summary(clean_bike$wind_speed )
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##   0.000   0.900   1.500   1.726   2.300   7.400
+
+# visibility
+
+Big part of visibility data is distributed towards high visibility. Only
+when visibility is close 0 then rent numbers are really low, but there
+are a few data points of a very low visibility, and from 700 and higher,
+bike rent count stabilizes.
+
+``` r
+hist(clean_bike$visibility ,xlab= "Visibility", main= "Visibility distribution" )
+```
+
+![](SeoulBikeRent_files/figure-gfm/vis-1.png)<!-- -->
+
+``` r
+ggplot(clean_bike, aes(visibility, rented_bike_count)) + geom_point() + geom_smooth()
+```
+
+    ## `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+
+![](SeoulBikeRent_files/figure-gfm/vis-2.png)<!-- --> \# solar radiation
 
 ## Modeling analysis
 
@@ -539,13 +607,13 @@ glimpse(train)
     ## Rows: 5,916
     ## Columns: 13
     ## $ date              <date> 2017-12-01, 2017-12-01, 2017-12-01, 2017-12-01, 201~
-    ## $ rented_bike_count <int> 173, 107, 78, 100, 181, 460, 490, 339, 360, 447, 463~
-    ## $ hour              <int> 2, 3, 4, 5, 6, 7, 9, 10, 11, 14, 15, 16, 17, 18, 19,~
-    ## $ temperature       <dbl> -6.0, -6.2, -6.0, -6.4, -6.6, -7.4, -6.5, -3.5, -0.5~
-    ## $ humidity          <int> 39, 40, 36, 37, 35, 38, 27, 24, 21, 26, 36, 54, 58, ~
-    ## $ wind_speed        <dbl> 1.0, 0.9, 2.3, 1.5, 1.3, 0.9, 0.5, 1.2, 1.3, 2.0, 3.~
-    ## $ visibility        <int> 2000, 2000, 2000, 2000, 2000, 2000, 1928, 1996, 1936~
-    ## $ solar_radiation   <dbl> 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.23, 0.65, 0.94~
+    ## $ rented_bike_count <int> 254, 204, 173, 107, 78, 100, 181, 451, 555, 600, 426~
+    ## $ hour              <int> 0, 1, 2, 3, 4, 5, 6, 13, 17, 19, 20, 22, 0, 1, 2, 3,~
+    ## $ temperature       <dbl> -5.2, -5.5, -6.0, -6.2, -6.0, -6.4, -6.6, 2.4, 0.8, ~
+    ## $ humidity          <int> 37, 38, 39, 40, 36, 37, 35, 25, 58, 77, 79, 83, 87, ~
+    ## $ wind_speed        <dbl> 2.2, 0.8, 1.0, 0.9, 2.3, 1.5, 1.3, 1.6, 1.6, 1.7, 1.~
+    ## $ visibility        <int> 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000~
+    ## $ solar_radiation   <dbl> 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.16, 0.08~
     ## $ rainfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
     ## $ snowfall          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
     ## $ seasons           <fct> Winter, Winter, Winter, Winter, Winter, Winter, Wint~
@@ -607,31 +675,27 @@ treem
     ## node), split, n, deviance, yval
     ##       * denotes terminal node
     ## 
-    ##   1) root 5916 2447684000.0  730.8867  
-    ##     2) temperature< 12.05 2793  339977600.0  369.3580  
-    ##       4) date< 17595.5 1583   38558320.0  228.1074 *
-    ##       5) date>=17595.5 1210  228515900.0  554.1512  
-    ##        10) hour< 6.5 483   15466590.0  260.7350 *
-    ##        11) hour>=6.5 727  143839700.0  749.0894  
-    ##          22) humidity>=81.5 130   15002090.0  311.5385 *
-    ##          23) humidity< 81.5 597   98529380.0  844.3685 *
-    ##     3) temperature>=12.05 3123 1416174000.0 1054.2140  
-    ##       6) hour< 15.5 1993  446504200.0  769.1274  
-    ##        12) solar_radiation< 0.305 945  116569800.0  479.7312 *
-    ##        13) solar_radiation>=0.305 1048  179425000.0 1030.0810  
-    ##          26) hour>=8.5 943  112192400.0  984.4846 *
-    ##          27) hour< 8.5 105   47664510.0 1439.5810  
-    ##            54) day=Saturday,Sunday 34     662478.5  614.4706 *
-    ##            55) day=Friday,Monday,Thursday,Tuesday,Wednesday 71   12769900.0 1834.7040 *
-    ##       7) hour>=15.5 1130  522005000.0 1557.0250  
-    ##        14) humidity>=83.5 111   23519690.0  401.5135 *
-    ##        15) humidity< 83.5 1019  334133100.0 1682.8950  
-    ##          30) hour>=22.5 109    8207008.0 1127.5960 *
-    ##          31) hour< 22.5 910  288289300.0 1749.4090  
-    ##            62) hour< 16.5 155   31014180.0 1325.1940 *
-    ##            63) hour>=16.5 755  223655000.0 1836.4990  
-    ##             126) temperature< 16.85 149   30246520.0 1407.7380 *
-    ##             127) temperature>=16.85 606  159282000.0 1941.9210 *
+    ##   1) root 5916 2463860000  727.7179  
+    ##     2) temperature< 10.95 2627  278104100  349.4187  
+    ##       4) date< 17595.5 1604   37825600  228.6091 *
+    ##       5) date>=17595.5 1023  180162300  538.8407  
+    ##        10) hour< 6.5 416   11381370  250.9423 *
+    ##        11) hour>=6.5 607  110669900  736.1483 *
+    ##     3) temperature>=10.95 3289 1509525000 1029.8740  
+    ##       6) hour< 15.5 2119  475176300  748.8259  
+    ##        12) solar_radiation< 0.205 964  102146800  448.7884  
+    ##          24) hour>=1.5 714   58230050  352.8641 *
+    ##          25) hour< 1.5 250   18583450  722.7480 *
+    ##        13) solar_radiation>=0.205 1155  213817100  999.2468 *
+    ##       7) hour>=15.5 1170  563836400 1538.8840  
+    ##        14) humidity>=83.5 119   27412710  400.7059 *
+    ##        15) humidity< 83.5 1051  364810600 1667.7550  
+    ##          30) temperature< 16.35 219   44379610 1251.4610 *
+    ##          31) temperature>=16.35 832  272488300 1777.3320  
+    ##            62) hour>=22.5 77    3842392 1220.9740 *
+    ##            63) hour< 22.5 755  242381100 1834.0730  
+    ##             126) hour< 16.5 129   26059650 1380.8060 *
+    ##             127) hour>=16.5 626  184356800 1927.4780 *
 
 ``` r
 plot(treem, uniform = TRUE,
@@ -681,8 +745,8 @@ predictions_train_cart = predict(treem, data = train)
 eval_results(train$rented_bike_count, predictions_train_cart, train)
 ```
 
-    ##       RMSE   Rsquare
-    ## 1 334.5196 0.7295319
+    ##       RMSE  Rsquare
+    ## 1 352.8495 0.701055
 
 ``` r
 # Step 3 - predicting and evaluating the model on test data
@@ -693,8 +757,8 @@ predictions_test_cart = predict(treem, newdata = test)
 eval_results(test$rented_bike_count, predictions_test_cart, test)
 ```
 
-    ##       RMSE  Rsquare
-    ## 1 347.6015 0.701542
+    ##       RMSE   Rsquare
+    ## 1 348.8524 0.6946247
 
 # gam model
 
@@ -707,31 +771,31 @@ summary(GAMsm)
     ## Call: gam(formula = rented_bike_count ~ ., data = train)
     ## Deviance Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -1133.86  -272.86   -54.97   205.55  2223.01 
+    ## -1149.13  -284.39   -54.07   213.10  2196.81 
     ## 
-    ## (Dispersion Parameter for gaussian family taken to be 185205)
+    ## (Dispersion Parameter for gaussian family taken to be 185929.6)
     ## 
-    ##     Null Deviance: 2447684248 on 5915 degrees of freedom
-    ## Residual Deviance: 1091968478 on 5896 degrees of freedom
-    ## AIC: 88567.3 
+    ##     Null Deviance: 2463860050 on 5915 degrees of freedom
+    ## Residual Deviance: 1096241189 on 5896 degrees of freedom
+    ## AIC: 88590.41 
     ## 
     ## Number of Local Scoring Iterations: 2 
     ## 
     ## Anova for Parametric Effects
     ##                   Df     Sum Sq   Mean Sq   F value    Pr(>F)    
-    ## date               1  384797503 384797503 2077.6846 < 2.2e-16 ***
-    ## hour               1  431507508 431507508 2329.8917 < 2.2e-16 ***
-    ## temperature        1  305663840 305663840 1650.4084 < 2.2e-16 ***
-    ## humidity           1  125530117 125530117  677.7902 < 2.2e-16 ***
-    ## wind_speed         1     106050    106050    0.5726 0.4492543    
-    ## visibility         1    2189022   2189022   11.8195 0.0005902 ***
-    ## solar_radiation    1   15562287  15562287   84.0274 < 2.2e-16 ***
-    ## rainfall           1   29922522  29922522  161.5644 < 2.2e-16 ***
-    ## snowfall           1     233551    233551    1.2610 0.2615003    
-    ## seasons            3   42415814  14138605   76.3403 < 2.2e-16 ***
-    ## holiday            1    3413869   3413869   18.4329 1.788e-05 ***
-    ## day                6   14373687   2395615   12.9349 1.398e-14 ***
-    ## Residuals       5896 1091968478    185205                        
+    ## date               1  375422100 375422100 2019.1621 < 2.2e-16 ***
+    ## hour               1  458417772 458417772 2465.5443 < 2.2e-16 ***
+    ## temperature        1  301222856 301222856 1620.0905 < 2.2e-16 ***
+    ## humidity           1  125777972 125777972  676.4815 < 2.2e-16 ***
+    ## wind_speed         1      14127     14127    0.0760 0.7828310    
+    ## visibility         1    2207435   2207435   11.8724 0.0005737 ***
+    ## solar_radiation    1   15502982  15502982   83.3809 < 2.2e-16 ***
+    ## rainfall           1   27542449  27542449  148.1337 < 2.2e-16 ***
+    ## snowfall           1     692387    692387    3.7239 0.0536863 .  
+    ## seasons            3   41633222  13877741   74.6397 < 2.2e-16 ***
+    ## holiday            1    4316907   4316907   23.2180 1.483e-06 ***
+    ## day                6   14868653   2478109   13.3282 4.622e-15 ***
+    ## Residuals       5896 1096241189    185930                        
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -786,7 +850,7 @@ rmse_fit1 <- Metrics::rmse(actual = test$rented_bike_count,
 print(rmse_fit1)
 ```
 
-    ## [1] 253.6741
+    ## [1] 247.1093
 
 ``` r
 min_MSE <- which.min(model_gbm$cv.error)
@@ -795,7 +859,7 @@ min_MSE <- which.min(model_gbm$cv.error)
 sqrt(model_gbm$cv.error[min_MSE])
 ```
 
-    ## [1] 251.7518
+    ## [1] 253.0821
 
 ``` r
 ## [1] 23112.1
