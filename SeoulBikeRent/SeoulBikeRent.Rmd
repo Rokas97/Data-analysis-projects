@@ -275,7 +275,7 @@ ggplot(clean_bike, aes(temperature, rented_bike_count)) + geom_point() + ylim(0,
 
 #humidity
 
-`Humidity` distribution is a little bit more left-skewed compared to 'temperature's' one but it still close to normal distribution. So mean as a metric will be used for analysis of high and low humidity marked as a red line in the `histogram`. New variable `higher` is created inspect how rent numbers numbers alter when humidity is higher then average and lower and the data is saved in the new data frame hum. `Rented_bike_count`  decreases the closer humidity approaches 100 percent humidity. By comparing their averages, it is visible, that average bike rent count drops when there is high humidity quite a lot(mostly probably due to rain, fog or other phenomena).
+`Humidity` distribution is a little bit more left-skewed compared to 'temperature's' one but it still close to normal distribution. So mean as a metric will be used for analysis of high and low humidity marked as a red line in the `histogram`. New variable `higher` is created inspect how rent numbers numbers alter when humidity is higher then average and lower and the data is saved in the new data frame hum. `Rented_bike_count`  decreases the closer `humidity` approaches 100 percent .By comparing their averages, it is visible, that average bike rent count drops when there is high humidity quite a lot(mostly probably due to rain, fog or other phenomena).
 
 
 ```{r hum}
@@ -303,8 +303,8 @@ ggplot(hum, aes(higher_humidity, rented_bike_count, fill = higher_humidity)) + g
 
 ```
 
-# wind_speed
-Since Seoul is a big city with not many open areas, it has average `wind_speed` of `2 m/s`, which is very low and the highest `7.4` which is still classified as low wind, so we can see in the numbers that there is a small change in bike rent numbers when speed reaches wind speeds close to `4 m/s`, but is pretty rare event.
+# Wind speed
+Since Seoul is a big city and not an  open field, it has average `wind speed` of `2 m/s`, which is very low and the highest `wind speed` `7.4 m/s` which is still classified as low wind, so we can see in the numbers that there is a small change in bike rent numbers when speed reaches `wind speeds` close to `4 m/s`, but is pretty rare event.
 
 
 ```{r wind}
@@ -318,7 +318,7 @@ summary(clean_bike$wind_speed )
 
 # Visibility
 
-Big part of visibility data is distributed towards high visibility. Only when visibility is close 0 then rent numbers are really low, but there are a few data points of a very low visibility, and from 700 and higher, bike rent count stabilizes.  
+Big part of `visibility` data is distributed towards high `visibility`. Only when `visibility` is close `0` then rent numbers are really low, but there are a few data points of a very low `visibility`, and from `700` and higher, `bike rent count` stabilizes.  
 
 
 ```{r vis}
@@ -329,9 +329,66 @@ ggplot(clean_bike, aes(visibility, rented_bike_count)) + geom_point() + geom_smo
 
 
 ```
-# solar radiation
 
+There are a lot of points distributed close to zero or equals to zero in the `solar radiation` distribution due to a fact that it is a cloudy. Also bike rent data is tracked 24 hours per day, so obviously solar radiation is marked 0 at night when the sun is down. Bike rent numbers on average doesn't really change during the winter. More significant impact is observed during the other `seasons`, where the `radiation` is around `1 MJ/m^2` or less, the `bike rent numbers` are the highest per hour. 
+
+# Solar radiation
+
+```{r solar}
+hist(clean$solar_radiation ,xlab= "Solar radiation", main= "Solar radiation distribution" )
+
+ggplot(solar, aes(solar_radiation, rented_bike_count, color= seasons)) + geom_point() + facet_wrap(~seasons) + 
+  theme(legend.position = "none") + ggtitle("Seasonal bike rent count dependency on solar radiation")
+
+
+
+```
+
+New variable `is_raining` was created to separate the data with and without `rainfall` and saved in the `rain` data frame . Ratio of raining per hour was calculated and the result was `~6 %` of rain per every hour throughout all year. During the rainfall, rented bike count drops significantly. `Average rented bike count` count drops from `764.6` to `165.4` when it is raining. The rainfall was observed throughout all the seasons 
+
+
+# Rainfall
+
+```{r rain}
+hist(clean_bike$rainfall ,xlab= "Rainfall", main= "Rainfall distribution" )
+
+rain <- clean_bike %>% mutate(is_raining = rainfall > 0)
+
+rain$is_raining <- as.factor(ifelse(rain$is_raining == TRUE,"Yes", "No" ))
+rain %>% summarize(raining_ratio = mean(is_raining== "Yes"))
+rain_yes_mean <- rain %>% filter(is_raining == "Yes") %>% summarize(avg_bike_count = mean(rented_bike_count))
+rain_no_mean <- rain %>% filter(is_raining == "No") %>% summarize(avg_bike_count = mean(rented_bike_count))
+rain_yes_mean
+rain_no_mean
+
+ggplot(rain, aes(rainfall, rented_bike_count, color= is_raining)) + geom_point() + ggtitle("Rented bike count dependency on rainfall") + 
+  theme(legend.position = "none")
+ggplot(rain, aes(rainfall, rented_bike_count, color= is_raining)) + geom_point() + ggtitle("Seasonal rented bike count dependency on rainfall") + 
+  theme(legend.position = "none") + facet_wrap(~seasons) 
+
+```
+
+
+Similar results were obtained with snowfall. Data frame `snow` was created in order to save new variable `is_snowing'. There was no snowfall during spring and summer.
+# Snowfall
+```{r snow}
+hist(clean_bike$snowfall ,xlab= "Snowfall", main= "Snowfall distribution" )
+
+snow <- clean_bike %>% mutate(is_snowing = snowfall > 0)
+
+snow$is_snowing <- as.factor(ifelse(snow$is_snowing == TRUE,"Yes", "No" ))
+snow %>% summarize(snowing_ratio = mean(is_snowing== "Yes"))
+
+ggplot(snow, aes(snowfall, rented_bike_count, color= is_snowing)) + geom_point() + ggtitle("Rented bike count dependency on snowfall") + 
+  theme(legend.position = "none")
+ggplot(snow, aes(snowfall, rented_bike_count, color= is_snowing)) + geom_point() + ggtitle("Seasonal rented bike count dependency on snowfall") + 
+  theme(legend.position = "none")
+
+
+```
 ## Modeling analysis
+
+
 
 Data is split into training and test data sets with 70/30 % ratio
 
